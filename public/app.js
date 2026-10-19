@@ -1,12 +1,13 @@
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-const FILTERS = [
-  { id: 'all', label: '전체' },
-  { id: 'breakfast', label: '아침', test: /조식/ },
-  { id: 'lunch', label: '점심', test: /중식/ },
-  { id: 'dinner', label: '저녁', test: /석식/ },
+const MEALS = [
+  { id: 'breakfast', label: '아침', test: /조식/, until: 10 * 60 },
+  { id: 'lunch', label: '점심', test: /중식/, until: 15 * 60 },
+  { id: 'dinner', label: '저녁', test: /석식/, until: 24 * 60 },
 ];
+// 밥·김치·기본 샐러드처럼 매일 나오는 것은 흐리게, 그 다음 첫 메뉴(대표 메뉴)는 굵게
+const BASIC = /^(백미밥|흑미밥|보리밥|현미밥|잡곡밥|추가밥|.*김치|깍두기|석박지|단무지|오이피클|피클|(그린|믹스|양배추)샐러드.*|샐러드 \+.*|시리얼.*|씨리얼.*|식빵&잼|셀프토스트.*|우유)$/;
 
-const state = { data: null, date: null, filter: 'all' };
+const state = { data: null, date: null, meal: null };
 
 const $ = (id) => document.getElementById(id);
 
@@ -25,18 +26,14 @@ function el(tag, attrs = {}, ...children) {
   return node;
 }
 
-// 한국 시간 기준 오늘 (YYYY-MM-DD)
-function kstToday() {
-  return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+// 한국 시간 기준 지금
+function kstNow() {
+  const d = new Date(Date.now() + 9 * 3600e3);
+  return { date: d.toISOString().slice(0, 10), minutes: d.getUTCHours() * 60 + d.getUTCMinutes() };
 }
 
 function weekdayOf(iso) {
   return new Date(`${iso}T00:00:00Z`).getUTCDay();
-}
-
-function formatDate(iso) {
-  const [, m, d] = iso.split('-').map(Number);
-  return `${m}월 ${d}일 (${WEEKDAYS[weekdayOf(iso)]})`;
 }
 
 function formatTime(iso) {
@@ -46,153 +43,232 @@ function formatTime(iso) {
   }).format(new Date(iso));
 }
 
-// 식단이 올라온 날짜들 + 오늘. 기본 선택은 오늘, 없으면 가장 가까운 날.
+function toMinutes(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
+
+// times 값은 '07:30-09:30' 이거나 [평일, 주말]
+function timeRange(cafe, mealId, date) {
+  const value = cafe.times?.[mealId];
+  if (!value) return null;
+  const wd = weekdayOf(date);
+  const text = Array.isArray(value) ? value[wd === 0 || wd === 6 ? 1 : 0] : value;
+  const [start, end] = text.split('-');
+  return { start: toMinutes(start), end: toMinutes(end), label: `${start}~${end}` };
+}
+
+function statusOf(range, date) {
+  const now = kstNow();
+  if (!range || date !== now.date) return null;
+  if (now.minutes < range.start) {
+    const left = range.start - now.minutes;
+    return left <= 60 ? { cls: 'soon', text: `${left}분 뒤 시작` } : { cls: 'soon', text: '운영 전' };
+  }
+  if (now.minutes < range.end) {
+    const left = range.end - now.minutes;
+    return { cls: 'live', text: left <= 30 ? `${left}분 남음` : '운영 중' };
+  }
+  return { cls: 'done', text: '마감' };
+}
+
+// 식단이 올라온 날짜들 + 오늘
 function allDates(data) {
-  const set = new Set([kstToday()]);
+  const set = new Set([kstNow().date]);
   for (const cafe of data.cafeterias) for (const day of cafe.days) set.add(day.date);
   return [...set].sort();
 }
 
 function pickDefaultDate(dates) {
-  const today = kstToday();
+  const today = kstNow().date;
   return dates.includes(today) ? today : dates.find((d) => d > today) ?? dates.at(-1);
+}
+
+function pickDefaultMeal() {
+  const { minutes } = kstNow();
+  return MEALS.find((m) => minutes < m.until).id;
 }
 
 function dayOf(cafe, date) {
   return cafe.days.find((d) => d.date === date) ?? null;
 }
 
-function itemList(items) {
-  return el('ul', { class: 'items' }, items.map((item) => el('li', {}, item)));
+function mealsFor(cafe, date, mealId) {
+  const test = MEALS.find((m) => m.id === mealId).test;
+  return (dayOf(cafe, date)?.meals ?? []).filter((m) => test.test(m.name));
 }
 
+function shortName(meal) {
+  // "조식(간편식)" → "간편식", "중식1" → "중식1", "중식" → "" (탭 이름과 같으면 생략)
+  const inner = meal.name.match(/\((.+)\)/)?.[1];
+  if (inner) return inner === '천원의 아침밥' ? '' : inner;
+  return /^(조식|중식|석식)$/.test(meal.name) ? '' : meal.name;
+}
+
+function itemList(items) {
+  let mainMarked = false;
+  const list = items.map((item) => {
+    const basic = BASIC.test(item);
+    const main = !basic && !mainMarked;
+    if (main) mainMarked = true;
+    return el('li', { class: main ? 'main' : basic ? 'basic' : null }, item);
+  });
+  return el('ul', { class: `items${items.length > 6 ? ' two' : ''}` }, list);
+}
+
+function linkRow(links) {
+  return el('div', { class: 'links' },
+    links.map((l) => el('a', { href: l.href, target: '_blank', rel: 'noopener' }, `${l.label} ↗`)));
+}
+
+/* 날짜 */
 function renderDays() {
-  const today = kstToday();
+  const today = kstNow().date;
+  const withMenu = new Set(state.data.cafeterias.flatMap((c) => c.days.map((d) => d.date)));
   const nav = $('days');
   nav.replaceChildren(
     ...allDates(state.data).map((date) => {
-      const [, m, d] = date.split('-').map(Number);
+      const wd = weekdayOf(date);
+      const d = Number(date.slice(8));
       return el('button', {
-        class: `day${date === today ? ' is-today' : ''}`,
+        class: ['day', date === today && 'is-today', wd === 0 && 'sun', wd === 6 && 'sat', !withMenu.has(date) && 'empty'].filter(Boolean).join(' '),
         'aria-pressed': String(date === state.date),
+        'aria-label': `${Number(date.slice(5, 7))}월 ${d}일 ${WEEKDAYS[wd]}요일${date === today ? ' (오늘)' : ''}`,
         onclick: () => { state.date = date; render(); },
-      }, `${WEEKDAYS[weekdayOf(date)]}${date === today ? ' · 오늘' : ''}`, el('small', {}, `${m}/${d}`));
+      }, el('span', { class: 'dow' }, date === today ? '오늘' : WEEKDAYS[wd]), el('span', { class: 'dnum' }, d));
     }),
   );
   nav.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
-  $('today-label').textContent = `${formatDate(state.date)} 식단`;
+
+  const [, m, d] = state.date.split('-').map(Number);
+  $('title').textContent = state.date === today ? '오늘의 학식' : `${m}월 ${d}일 (${WEEKDAYS[weekdayOf(state.date)]}) 학식`;
 }
 
-function cheonwonCards() {
-  const date = state.date;
-  const weekday = weekdayOf(date);
-  const cards = [];
-
-  for (const cafe of state.data.cafeterias) {
-    if (!cafe.cheonwon) continue;
-    const runs = cafe.cheonwon.weekdays.includes(weekday);
-    const day = dayOf(cafe, date);
-    const meals = day?.meals.filter((m) => m.cheonwon) ?? [];
-
-    if (meals.length > 0) {
-      for (const meal of meals) {
-        cards.push(el('article', { class: 'card' },
-          el('div', { class: 'card-head' }, el('h3', {}, cafe.name), el('span', { class: 'kind' }, meal.name)),
-          el('div', { class: 'badges' },
-            el('span', { class: 'badge' }, '1,000원'),
-            meal.limit && el('span', { class: 'badge' }, `${meal.limit}개 한정`),
-            el('span', { class: 'badge muted' }, cafe.cheonwon.hours.split(' (')[0]),
-          ),
-          itemList(meal.items),
-          cafe.live && el('p', { class: 'meta' }, '쉐프스키스 홈페이지에서 자동으로 가져온 메뉴입니다.'),
-          !cafe.live && cafe.manual && el('p', { class: 'meta' }, '업체 홈페이지 메뉴를 옮겨 적은 것입니다.'),
-          (cafe.live || cafe.manual) && cafe.links && el('div', { class: 'links' },
-            cafe.links.map((l) => el('a', { href: l.href, target: '_blank', rel: 'noopener' }, `${l.label} ↗`))),
-        ));
-      }
-      continue;
-    }
-
-    // 아침 칸이 미운영이거나, 학교 페이지에 메뉴가 없는 식당(1호관 등)
-    const closedMeal = day?.meals.find((m) => /조식/.test(m.name) && m.closed);
-    const off = !runs || Boolean(closedMeal);
-    cards.push(el('article', { class: `card${off ? ' off' : ''}` },
-      el('div', { class: 'card-head' }, el('h3', {}, cafe.name), el('span', { class: 'kind' }, cafe.operator)),
-      el('div', { class: 'badges' },
-        el('span', { class: off ? 'badge muted' : 'badge' }, off ? '이날 미운영' : '1,000원'),
-        el('span', { class: 'badge muted' }, cafe.cheonwon.hours),
-      ),
-      off
-        ? el('p', { class: 'empty' }, closedMeal?.note ?? '운영 요일이 아닙니다.')
-        : el('p', { class: 'empty' }, cafe.days.length || !cafe.links
-          ? '이날 식단이 아직 올라오지 않았어요.'
-          : `${cafe.cheonwon.note}.`),
-      cafe.links && el('div', { class: 'links' },
-        cafe.links.map((l) => el('a', { href: l.href, target: '_blank', rel: 'noopener' }, `${l.label} ↗`))),
-    ));
-  }
-  $('cheonwon').replaceChildren(...cards);
-}
-
-function renderFilter() {
-  $('meal-filter').replaceChildren(
-    ...FILTERS.map((f) => el('button', {
-      role: 'tab',
-      'aria-selected': String(f.id === state.filter),
-      onclick: () => { state.filter = f.id; render(); },
-    }, f.label)),
+/* 끼니 탭 */
+function renderTabs() {
+  $('tabs').replaceChildren(
+    ...MEALS.map((meal) => {
+      const count = state.data.cafeterias.filter((c) => mealsFor(c, state.date, meal.id).some((m) => !m.closed)).length;
+      return el('button', {
+        class: 'tab',
+        role: 'tab',
+        'aria-selected': String(meal.id === state.meal),
+        onclick: () => { state.meal = meal.id; render(); },
+      }, meal.label, el('small', {}, count ? `${count}곳` : '–'));
+    }),
   );
 }
 
-function allMenus() {
-  const filter = FILTERS.find((f) => f.id === state.filter);
-  const blocks = [];
-  for (const cafe of state.data.cafeterias) {
-    if (!cafe.days.length && !cafe.error) continue;
-    const day = dayOf(cafe, state.date);
-    const meals = (day?.meals ?? []).filter((m) => !filter.test || filter.test.test(m.name));
-    if (day && filter.test && meals.length === 0) continue;
-
-    blocks.push(el('div', { class: 'cafe' },
-      el('h3', { class: 'cafe-title' }, cafe.name, el('a', { href: cafe.mealsSource ?? cafe.url, target: '_blank', rel: 'noopener' }, '원본 ↗')),
-      cafe.mealsSource && state.date >= kstToday() && !day?.meals.some((m) => m.name === '중식')
-        && el('p', { class: 'meta' }, '1호관 점심·저녁 메뉴는 보통 점심시간 무렵 인스타그램에 올라옵니다.'),
-      cafe.error && el('p', { class: 'warn' }, `최근 갱신 실패 — ${formatTime(cafe.updatedAt)} 데이터입니다. 원본을 확인하세요.`),
-      day
-        ? el('div', { class: 'cards' }, meals.map((meal) => el('article', { class: `card${meal.closed ? ' off' : ''}` },
-          el('div', { class: 'card-head' }, el('span', { class: 'kind' }, meal.name),
-            meal.cheonwon && el('span', { class: 'badge' }, '천원의 아침밥')),
-          meal.closed ? el('p', { class: 'empty' }, meal.note) : itemList(meal.items),
-        )))
-        : el('p', { class: 'empty' }, '이날 식단이 없습니다.'),
-    ));
-  }
-  $('all').replaceChildren(...(blocks.length ? blocks : [el('p', { class: 'empty' }, '선택한 시간대의 식단이 없습니다.')]));
+function priceOf(cafe) {
+  return state.meal === 'breakfast' && cafe.cheonwon ? '1,000원' : cafe.prices?.[state.meal];
 }
 
+function cardHead(cafe) {
+  const range = timeRange(cafe, state.meal, state.date);
+  const status = statusOf(range, state.date);
+  return el('div', { class: 'card-head' },
+    el('div', {},
+      el('h3', { class: 'card-title' }, cafe.name),
+      el('p', { class: 'card-sub' }, [range?.label, priceOf(cafe)].filter(Boolean).join(' · ')),
+    ),
+    status && el('span', { class: `status ${status.cls}` }, status.text),
+  );
+}
+
+/* 식당 카드 */
+function cafeCard(cafe, meals) {
+  return el('article', { class: 'card' },
+    cardHead(cafe),
+    meals.map((meal) => el('section', { class: 'meal' },
+      (shortName(meal) || meal.cheonwon || meal.limit) && el('div', { class: 'meal-head' },
+        shortName(meal) && el('span', { class: 'meal-name' }, shortName(meal)),
+        meal.cheonwon && el('span', { class: 'tag' }, '천원의 아침밥'),
+        meal.limit && el('span', { class: 'tag plain' }, `${meal.limit}개 한정`),
+      ),
+      meal.closed ? el('p', { class: 'note' }, meal.note || '미운영') : itemList(meal.items),
+    )),
+    cafe.error && el('p', { class: 'warn' }, `최근 갱신 실패 — ${formatTime(cafe.updatedAt)} 기준 식단입니다.`),
+    cafe.live && linkRow(sourceLinks(cafe)),
+  );
+}
+
+// 1호관 원본 링크: 아침은 이번 주 아침밥 글, 점심·저녁은 푸드코트(인스타그램 피드) 페이지
+function sourceLinks(cafe) {
+  const insta = (cafe.links ?? []).filter((l) => /instagram/.test(l.href));
+  if (state.meal === 'breakfast') {
+    return [{ label: '아침밥 원본', href: cafe.breakfastSource ?? 'https://chefskiss.co.kr/morning' }, ...insta];
+  }
+  return [{ label: '푸드코트 원본', href: 'https://chefskiss.co.kr/foodcourt' }, ...insta];
+}
+
+// 1호관처럼 업체 사이트에서 따로 받는 식당: 메뉴가 아직 없을 때 안내 카드
+function pendingCard(cafe) {
+  const text = state.meal === 'breakfast'
+    ? '이 날 아침밥 식단이 아직 올라오지 않았어요.'
+    : '점심·저녁 메뉴는 보통 점심시간 무렵 인스타그램에 올라와요.';
+  return el('article', { class: 'card muted' },
+    cardHead(cafe),
+    el('p', { class: 'note' }, text),
+    linkRow(sourceLinks(cafe)),
+  );
+}
+
+function runsOn(cafe, mealId, date) {
+  if (mealId === 'breakfast') return Boolean(cafe.cheonwon?.weekdays.includes(weekdayOf(date)));
+  return Boolean(cafe.times?.[mealId]);
+}
+
+function renderMain() {
+  const cards = [];
+  const closed = [];
+  for (const cafe of state.data.cafeterias) {
+    const meals = mealsFor(cafe, state.date, state.meal);
+    if (meals.some((m) => !m.closed)) cards.push(cafeCard(cafe, meals));
+    else if (cafe.id === 'dorm1' && runsOn(cafe, state.meal, state.date) && state.date >= kstNow().date) cards.push(pendingCard(cafe));
+    else if (runsOn(cafe, state.meal, state.date) || meals.length) closed.push(cafe.name);
+  }
+
+  const children = [];
+  if (state.meal === 'breakfast' && cards.length) {
+    children.push(el('p', { class: 'banner' },
+      el('span', { class: 'big', 'aria-hidden': 'true' }, '🍚'),
+      el('span', {}, el('strong', {}, '천원의 아침밥'), ' — 재학생은 아침 한 끼 1,000원')));
+  }
+  children.push(cards.length
+    ? el('div', { class: 'grid' }, cards)
+    : el('div', { class: 'empty-state' },
+      el('div', { class: 'big', 'aria-hidden': 'true' }, '🍽️'),
+      el('p', {}, '이 날은 올라온 식단이 없어요.')));
+  if (closed.length) children.push(el('p', { class: 'closed-list' }, `식단 없음 · 미운영: ${closed.join(', ')}`));
+  $('main').replaceChildren(...children);
+}
+
+/* 식당 정보 · 꼬리말 */
 function renderInfo() {
-  $('info').replaceChildren(...state.data.cafeterias.map((cafe) => el('article', { class: 'card' },
-    el('div', { class: 'card-head' }, el('h3', {}, cafe.name), el('span', { class: 'kind' }, cafe.operator)),
+  $('info').replaceChildren(...state.data.cafeterias.map((cafe) => el('details', {},
+    el('summary', {}, cafe.name, el('span', {}, cafe.operator)),
     el('ul', {}, cafe.hours.map((h) => el('li', {}, h))),
-    cafe.cheonwon && el('p', { class: 'meta' }, `천원의 아침밥: ${cafe.cheonwon.hours} · ${cafe.cheonwon.price}`),
-    el('p', { class: 'meta' }, cafe.location),
+    cafe.cheonwon && el('p', {}, `천원의 아침밥: ${cafe.cheonwon.hours} · ${cafe.cheonwon.price}`),
+    el('p', {}, `${cafe.location} · `,
+      el('a', { href: cafe.id === 'dorm1' ? 'https://chefskiss.co.kr/foodcourt' : cafe.url, target: '_blank', rel: 'noopener' }, '원본 식단 ↗')),
   )));
 
   $('foot').replaceChildren(
-    el('p', {}, `식단 마지막 변경: ${formatTime(state.data.generatedAt)} · 운영 정보 확인일: ${state.data.infoCheckedAt}`),
-    el('p', {}, '제주대학교 홈페이지 식단 게시판을 자동으로 모은 비공식 페이지입니다. 메뉴는 식당 사정에 따라 바뀔 수 있고, 공휴일 휴무는 반영되지 않습니다.'),
-    el('p', {}, '원본: ', state.data.cafeterias.flatMap((c, i) => [
-      i ? ' · ' : '', el('a', { href: c.url, target: '_blank', rel: 'noopener' }, c.name),
-    ])),
+    el('p', {}, `식단 마지막 변경 ${formatTime(state.data.generatedAt)} · 운영 정보 확인일 ${state.data.infoCheckedAt}`),
+    el('p', {}, '제주대학교 홈페이지와 쉐프스키스(1호관) 사이트의 식단을 자동으로 모은 비공식 페이지입니다. 메뉴는 식당 사정에 따라 바뀔 수 있고, 공휴일 휴무는 반영되지 않습니다.'),
   );
 }
 
+function renderNow() {
+  const { minutes } = kstNow();
+  $('now').textContent = `지금 ${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
 function render() {
+  renderNow();
   renderDays();
-  cheonwonCards();
-  renderFilter();
-  allMenus();
-  renderInfo();
+  renderTabs();
+  renderMain();
 }
 
 async function main() {
@@ -201,12 +277,16 @@ async function main() {
     if (!res.ok) throw new Error(res.status);
     state.data = await res.json();
   } catch {
-    $('cheonwon').replaceChildren(el('p', { class: 'empty' }, '식단을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'));
+    $('main').replaceChildren(el('div', { class: 'empty-state' }, el('p', {}, '식단을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')));
     return;
   }
   state.date = pickDefaultDate(allDates(state.data));
+  state.meal = pickDefaultMeal();
   render();
+  renderInfo();
   loadDorm1();
+  // 운영 상태 표시를 1분마다 새로 고친다
+  setInterval(() => { renderNow(); renderMain(); }, 60_000);
 }
 
 // 1호관 메뉴는 해외 접속이 막힌 업체 사이트에 있어, 서울 리전 함수로 따로 받는다.
@@ -222,31 +302,31 @@ async function getJson(url) {
   }
 }
 
+function mergeDays(byDate, days, replace) {
+  for (const day of days) {
+    const target = byDate.get(day.date) ?? { date: day.date, weekday: day.weekday, meals: [] };
+    target.meals = target.meals.filter((m) => !replace(m, day)).concat(day.meals);
+    byDate.set(day.date, target);
+  }
+}
+
 async function loadDorm1() {
   const cafe = state.data.cafeterias.find((c) => c.id === 'dorm1');
   if (!cafe) return;
   const [breakfast, meals] = await Promise.all([getJson('api/dorm1'), getJson('api/dorm1-meals')]);
+  if (!breakfast?.days?.length && !meals?.days?.length) return;
 
   const byDate = new Map(cafe.days.map((d) => [d.date, d]));
   if (breakfast?.days?.length) {
-    for (const day of breakfast.days) byDate.set(day.date, day);
-    cafe.live = true;
-    if (breakfast.source) {
-      cafe.links = [{ label: '이번 주 원본 글', href: breakfast.source }, ...(cafe.links ?? []).filter((l) => !/morning/.test(l.href))];
-    }
+    mergeDays(byDate, breakfast.days, (m) => /조식/.test(m.name));
+    cafe.breakfastSource = breakfast.source;
   }
   if (meals?.days?.length) {
-    for (const day of meals.days) {
-      const target = byDate.get(day.date) ?? { date: day.date, weekday: day.weekday, meals: [] };
-      const names = new Set(day.meals.map((m) => m.name));
-      target.meals = target.meals.filter((m) => !names.has(m.name)).concat(day.meals);
-      byDate.set(day.date, target);
-    }
-    cafe.mealsSource = meals.source;
+    mergeDays(byDate, meals.days, (m, day) => day.meals.some((x) => x.name === m.name));
   }
-  if (!breakfast?.days?.length && !meals?.days?.length) return;
-
+  cafe.live = true;
   cafe.days = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+
   const keep = state.date;
   const dates = allDates(state.data);
   state.date = dates.includes(keep) ? keep : pickDefaultDate(dates);

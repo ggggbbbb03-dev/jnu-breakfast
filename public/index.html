@@ -2,43 +2,45 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>제주대 천원의 아침밥</title>
-  <meta name="description" content="제주대학교 천원의 아침밥과 식당별 식단을 한 화면에서 봅니다.">
-  <meta name="theme-color" content="#f6efe4" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1b1814" media="(prefers-color-scheme: dark)">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>제주대 오늘의 학식 · 천원의 아침밥</title>
+  <meta name="description" content="제주대학교 천원의 아침밥과 학생식당(6호관·1호관·백두관·사라캠퍼스) 식단을 한 화면에서 봅니다.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="제주대 오늘의 학식 · 천원의 아침밥">
+  <meta property="og:description" content="6호관·1호관·백두관·사라캠퍼스 아침·점심·저녁을 한 화면에서">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="theme-color" content="#f7f1e8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#191612" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍚</text></svg>">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="top">
-    <div class="wrap">
-      <p class="eyebrow">제주대학교 · 비공식 모아보기</p>
-      <h1>천원의 아침밥</h1>
-      <p class="sub" id="today-label"></p>
+    <div class="wrap top-row">
+      <div>
+        <p class="eyebrow">제주대학교 학식 모아보기</p>
+        <h1 id="title">오늘의 학식</h1>
+      </div>
+      <p class="now" id="now" aria-live="polite"></p>
     </div>
-    <nav class="days wrap" id="days" aria-label="날짜 선택"></nav>
+    <nav class="wrap days" id="days" aria-label="날짜 선택"></nav>
+    <div class="wrap">
+      <div class="tabs" role="tablist" id="tabs" aria-label="끼니 선택"></div>
+    </div>
   </header>
 
-  <main class="wrap">
-    <section aria-labelledby="h-cheonwon">
-      <h2 id="h-cheonwon">천원의 아침밥</h2>
-      <div class="cards" id="cheonwon"></div>
-    </section>
-
-    <section aria-labelledby="h-all">
-      <div class="section-head">
-        <h2 id="h-all">식당별 식단</h2>
-        <div class="seg" role="tablist" id="meal-filter"></div>
-      </div>
-      <div id="all"></div>
-    </section>
-
-    <section aria-labelledby="h-info">
-      <h2 id="h-info">운영 정보</h2>
-      <div class="info" id="info"></div>
-    </section>
+  <main class="wrap" id="main">
+    <div class="skeleton" aria-hidden="true">
+      <div class="card sk"></div><div class="card sk"></div><div class="card sk"></div>
+    </div>
   </main>
+
+  <section class="wrap info" aria-labelledby="h-info">
+    <h2 id="h-info">식당 정보</h2>
+    <div id="info"></div>
+  </section>
 
   <footer class="wrap foot" id="foot"></footer>
 
