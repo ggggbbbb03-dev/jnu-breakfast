@@ -1,13 +1,19 @@
 // 학생생활관 1호관 점심·저녁 메뉴 (쉐프스키스 /foodcourt 의 인스타그램 피드에서 읽음)
-// 메뉴가 점심시간 무렵 올라오므로 아침밥(3시간)보다 짧게 30분 캐시한다.
+// 그날 점심·저녁 메뉴가 점심 무렵 한 번에 올라오므로, 한국 시간 10~14시에는 10분,
+// 그 외에는 1시간 캐시한다.
 
 import { fetchFoodcourt } from '../scripts/chefskiss.mjs';
+
+function cacheSeconds(now = new Date()) {
+  const kstHour = (now.getUTCHours() + 9) % 24;
+  return kstHour >= 10 && kstHour < 14 ? 600 : 3600;
+}
 
 export default async function handler(req, res) {
   const debug = req.query?.debug !== undefined;
   try {
     const result = await fetchFoodcourt({ debug });
-    res.setHeader('Cache-Control', debug ? 'no-store' : 'public, s-maxage=1800, stale-while-revalidate=1800');
+    res.setHeader('Cache-Control', debug ? 'no-store' : `public, s-maxage=${cacheSeconds()}, stale-while-revalidate=600`);
     res.status(200).json(result);
   } catch (err) {
     res.setHeader('Cache-Control', 'public, s-maxage=300');
