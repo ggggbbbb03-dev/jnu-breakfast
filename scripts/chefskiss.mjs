@@ -115,6 +115,28 @@ export function parsePost(html, today = kstToday()) {
   return { days, errors };
 }
 
+// 진단용: 다른 게시판(foodcourt, today)의 최신 글이 어떻게 생겼는지 본다.
+export const BOARDS = ['morning', 'foodcourt', 'today'];
+export async function probeBoard(board) {
+  const list = await get(`${ORIGIN}/${board}`);
+  const posts = findPosts(list.text);
+  const info = { board, listStatus: list.status, posts: posts.slice(0, 5), titles: postTitles(list.text).slice(0, 10) };
+  if (posts[0]) {
+    const post = await get(posts[0]);
+    info.newest = { status: post.status, tables: (post.text.match(/<table/gi) ?? []).length,
+      images: (post.text.match(/<img/gi) ?? []).length, lines: toLines(post.text).slice(0, 150) };
+  } else {
+    info.listSample = toLines(list.text).slice(0, 100);
+  }
+  return info;
+}
+
+function postTitles(html) {
+  return [...html.matchAll(/<a[^>]*href="[^"]*bmode=view[^"]*"[^>]*>([\s\S]*?)<\/a>/gi)]
+    .map((m) => toLines(m[1]).join(' '))
+    .filter(Boolean);
+}
+
 async function get(url) {
   const res = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'ko-KR,ko;q=0.9' }, signal: AbortSignal.timeout(8000) });
   const text = await res.text();
