@@ -1,5 +1,6 @@
 // 식당 목록과 운영 정보.
-// cheonwon.weekdays 는 천원의 아침밥 운영 요일 (0=일 ~ 6=토). 공휴일은 반영하지 않는다.
+// cheonwon.weekdays 는 천원의 아침밥 운영 요일 (0=일 ~ 6=토).
+// closedOnHolidays: 원본에 '공휴일 휴무'가 적힌 식당. 나머지 식당은 공휴일 운영 여부를 알 수 없어 화면에 '확인 필요'로 표시한다.
 // times 는 화면의 "운영 중/마감" 표시용 끼니별 시간. [평일, 주말]로 다르면 배열로 적는다.
 // prices 는 카드에 보여 줄 끼니별 가격 요약.
 // 메뉴는 매번 학교 페이지에서 가져오지만, 운영시간·가격 같은 안내 문구는 표 바깥에 자유 형식으로
@@ -47,6 +48,7 @@ export const cafeterias = [
       { label: '인스타그램', href: 'https://www.instagram.com/chefskiss_jnu/' },
       { label: '홈페이지 메뉴', href: 'https://chefskiss.co.kr/morning' },
     ],
+    closedOnHolidays: true,
     hours: ['아침 07:30~09:30', '점심 11:00~14:00', '저녁 17:00~19:00'],
     times: { breakfast: '07:30-09:30', lunch: '11:00-14:00', dinner: '17:00-19:00' },
     prices: { lunch: '6,000원', dinner: '6,000원' },

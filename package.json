@@ -3,10 +3,13 @@
   "private": true,
   "type": "module",
   "description": "제주대학교 천원의 아침밥·식당별 식단 모아보기",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "scrape": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-certs/sectigo-dv-r36.pem} node scripts/scrape.mjs",
     "test": "node --test test/*.test.mjs",
-    "dev": "npx --yes serve@14.2.4 public"
+    "dev": "npx --yes serve@14.2.4 public",
+    "check": "node scripts/check.mjs"
   }
 }

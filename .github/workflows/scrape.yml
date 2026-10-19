@@ -42,3 +42,6 @@ jobs:
           git add public/data/menus.json
           git commit -m "식단 갱신 $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M')"
           git push
+      # 수집이 멈췄거나 1호관 함수가 고장 나면 여기서 실패해 메일 알림이 간다
+      - name: 상태 점검
+        run: npm run check

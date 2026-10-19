@@ -1,4 +1,6 @@
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+// 의견 보내기 (구글 설문지 주소). 비워 두면 버튼이 나타나지 않는다.
+const FEEDBACK_URL = '';
 const MEALS = [
   { id: 'breakfast', label: '아침', test: /조식/, until: 10 * 60 },
   { id: 'lunch', label: '점심', test: /중식/, until: 15 * 60 },
@@ -131,7 +133,7 @@ function renderDays() {
       const wd = weekdayOf(date);
       const d = Number(date.slice(8));
       return el('button', {
-        class: ['day', date === today && 'is-today', wd === 0 && 'sun', wd === 6 && 'sat', !withMenu.has(date) && 'empty'].filter(Boolean).join(' '),
+        class: ['day', date === today && 'is-today', (wd === 0 || holidayOf(date)) && 'sun', wd === 6 && !holidayOf(date) && 'sat', !withMenu.has(date) && 'empty'].filter(Boolean).join(' '),
         'aria-pressed': String(date === state.date),
         'aria-label': `${Number(date.slice(5, 7))}월 ${d}일 ${WEEKDAYS[wd]}요일${date === today ? ' (오늘)' : ''}`,
         onclick: () => { state.date = date; render(); },
@@ -148,7 +150,9 @@ function renderDays() {
 function renderTabs() {
   $('tabs').replaceChildren(
     ...MEALS.map((meal) => {
-      const count = state.data.cafeterias.filter((c) => mealsFor(c, state.date, meal.id).some((m) => !m.closed)).length;
+      const count = state.data.cafeterias
+        .filter((c) => !(holidayOf(state.date) && c.closedOnHolidays))
+        .filter((c) => mealsFor(c, state.date, meal.id).some((m) => !m.closed)).length;
       return el('button', {
         class: 'tab',
         role: 'tab',
@@ -159,13 +163,19 @@ function renderTabs() {
   );
 }
 
+function holidayOf(date) {
+  return state.data.holidays?.[date] ?? null;
+}
+
 function priceOf(cafe) {
   return state.meal === 'breakfast' && cafe.cheonwon ? '1,000원' : cafe.prices?.[state.meal];
 }
 
 function cardHead(cafe) {
   const range = timeRange(cafe, state.meal, state.date);
-  const status = statusOf(range, state.date);
+  const status = holidayOf(state.date) && range
+    ? { cls: 'off', text: '공휴일 · 운영 확인' }
+    : statusOf(range, state.date);
   return el('div', { class: 'card-head' },
     el('div', {},
       el('h3', { class: 'card-title' }, cafe.name),
@@ -221,14 +231,21 @@ function runsOn(cafe, mealId, date) {
 function renderMain() {
   const cards = [];
   const closed = [];
+  const holiday = holidayOf(state.date);
   for (const cafe of state.data.cafeterias) {
     const meals = mealsFor(cafe, state.date, state.meal);
-    if (meals.some((m) => !m.closed)) cards.push(cafeCard(cafe, meals));
+    if (holiday && cafe.closedOnHolidays) closed.push(`${cafe.name}(공휴일 휴무)`);
+    else if (meals.some((m) => !m.closed)) cards.push(cafeCard(cafe, meals));
     else if (cafe.id === 'dorm1' && runsOn(cafe, state.meal, state.date) && state.date >= kstNow().date) cards.push(pendingCard(cafe));
     else if (runsOn(cafe, state.meal, state.date) || meals.length) closed.push(cafe.name);
   }
 
   const children = [];
+  if (holiday) {
+    children.push(el('p', { class: 'banner holiday' },
+      el('span', { class: 'big', 'aria-hidden': 'true' }, '🎌'),
+      el('span', {}, el('strong', {}, holiday), ' — 공휴일에는 식당마다 운영이 달라요. 가기 전에 확인하세요.')));
+  }
   if (state.meal === 'breakfast' && cards.length) {
     children.push(el('p', { class: 'banner' },
       el('span', { class: 'big', 'aria-hidden': 'true' }, '🍚'),
@@ -254,6 +271,7 @@ function renderInfo() {
   )));
 
   $('foot').replaceChildren(
+    FEEDBACK_URL && el('a', { class: 'feedback', href: FEEDBACK_URL, target: '_blank', rel: 'noopener' }, '💬 의견 보내기 · 틀린 메뉴 제보'),
     el('p', {}, `식단 마지막 변경 ${formatTime(state.data.generatedAt)} · 운영 정보 확인일 ${state.data.infoCheckedAt}`),
     el('p', {}, '제주대학교 홈페이지와 쉐프스키스(1호관) 사이트의 식단을 자동으로 모은 비공식 페이지입니다. 메뉴는 식당 사정에 따라 바뀔 수 있고, 공휴일 휴무는 반영되지 않습니다.'),
   );

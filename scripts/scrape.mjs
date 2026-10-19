@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { cafeterias, CHECKED_AT } from './cafeterias.mjs';
 import { parseMenuPage, kstToday } from './parse.mjs';
 import { parseManual } from './manual.mjs';
+import { holidays, HOLIDAYS_CHECKED_AT } from './holidays.mjs';
 
 const OUT = fileURLToPath(new URL('../public/data/menus.json', import.meta.url));
 const ATTEMPTS = 3;
@@ -93,6 +94,8 @@ if (failures === cafeterias.filter((c) => c.scrape).length) {
 const data = {
   generatedAt: new Date().toISOString(),
   infoCheckedAt: CHECKED_AT,
+  holidays,
+  holidaysCheckedAt: HOLIDAYS_CHECKED_AT,
   cafeterias: results,
 };
 
