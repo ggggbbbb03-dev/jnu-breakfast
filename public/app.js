@@ -173,7 +173,7 @@ function renderInfo() {
   )));
 
   $('foot').replaceChildren(
-    el('p', {}, `식단 수집: ${formatTime(state.data.generatedAt)} · 운영 정보 확인일: ${state.data.infoCheckedAt}`),
+    el('p', {}, `식단 마지막 변경: ${formatTime(state.data.generatedAt)} · 운영 정보 확인일: ${state.data.infoCheckedAt}`),
     el('p', {}, '제주대학교 홈페이지 식단 게시판을 자동으로 모은 비공식 페이지입니다. 메뉴는 식당 사정에 따라 바뀔 수 있고, 공휴일 휴무는 반영되지 않습니다.'),
     el('p', {}, '원본: ', state.data.cafeterias.flatMap((c, i) => [
       i ? ' · ' : '', el('a', { href: c.url, target: '_blank', rel: 'noopener' }, c.name),
