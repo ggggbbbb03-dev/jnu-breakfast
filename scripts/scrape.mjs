@@ -9,6 +9,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cafeterias, CHECKED_AT } from './cafeterias.mjs';
 import { parseMenuPage, kstToday } from './parse.mjs';
+import { parseManual } from './manual.mjs';
 
 const OUT = fileURLToPath(new URL('../public/data/menus.json', import.meta.url));
 const ATTEMPTS = 3;
@@ -45,7 +46,7 @@ const results = [];
 let failures = 0;
 
 for (const cafe of cafeterias) {
-  const { scrape, ...info } = cafe;
+  const { scrape, manual, ...info } = cafe;
   const entry = { ...info, days: [], updatedAt: null, error: null };
   if (scrape) {
     try {
@@ -61,6 +62,18 @@ for (const cafe of cafeterias) {
       entry.updatedAt = old?.updatedAt ?? null;
       entry.error = err.message;
       console.error(`[${cafe.id}] ${err.message}`);
+    }
+  }
+  if (manual) {
+    try {
+      const path = fileURLToPath(new URL(`../${manual}`, import.meta.url));
+      entry.days = parseManual(await readFile(path, 'utf8'), '조식(천원의 아침밥)', today);
+      entry.manual = true;
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        entry.error = `${manual}: ${err.message}`;
+        console.error(`[${cafe.id}] ${entry.error}`);
+      }
     }
   }
   results.push(entry);

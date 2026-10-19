@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T21:29:36.260Z",
+  "generatedAt": "2026-10-19T21:33:25.647Z",
   "infoCheckedAt": "2026-10-19",
   "cafeterias": [
     {
@@ -460,7 +460,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-10-19T21:29:35.120Z",
+      "updatedAt": "2026-10-19T21:33:23.098Z",
       "error": null
     },
     {
@@ -479,7 +479,7 @@
         ],
         "hours": "일~금 07:30~09:30 (토요일·공휴일 휴무)",
         "price": "1,000원",
-        "note": "그날 메뉴는 쉐프스키스 인스타그램에 공지"
+        "note": "메뉴는 쉐프스키스 홈페이지·인스타그램에 공지"
       },
       "links": [
         {
@@ -487,8 +487,8 @@
           "href": "https://www.instagram.com/chefskiss_jnu/"
         },
         {
-          "label": "홈페이지",
-          "href": "https://chefskiss.co.kr/"
+          "label": "홈페이지 메뉴",
+          "href": "https://chefskiss.co.kr/morning"
         }
       ],
       "hours": [
@@ -499,7 +499,8 @@
       "location": "학생생활관 1호관 지하1층 GS25 안쪽",
       "days": [],
       "updatedAt": null,
-      "error": null
+      "error": null,
+      "manual": true
     },
     {
       "id": "baekdu",
@@ -754,7 +755,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-10-19T21:29:35.925Z",
+      "updatedAt": "2026-10-19T21:33:23.604Z",
       "error": null
     },
     {
@@ -941,7 +942,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-10-19T21:29:36.260Z",
+      "updatedAt": "2026-10-19T21:33:25.647Z",
       "error": null
     }
   ]

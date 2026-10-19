@@ -104,6 +104,9 @@ function cheonwonCards() {
             el('span', { class: 'badge muted' }, cafe.cheonwon.hours.split(' (')[0]),
           ),
           itemList(meal.items),
+          cafe.manual && el('p', { class: 'meta' }, '업체 홈페이지 메뉴를 옮겨 적은 것입니다.'),
+          cafe.manual && cafe.links && el('div', { class: 'links' },
+            cafe.links.map((l) => el('a', { href: l.href, target: '_blank', rel: 'noopener' }, `${l.label} ↗`))),
         ));
       }
       continue;

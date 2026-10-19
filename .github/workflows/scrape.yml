@@ -7,6 +7,10 @@ on:
     - cron: '7 2 * * *'
     - cron: '7 7 * * *'
   workflow_dispatch:
+  # 1호관 메뉴 파일을 고치면 바로 반영
+  push:
+    branches: [main]
+    paths: ['manual/**']
 
 permissions:
   contents: write

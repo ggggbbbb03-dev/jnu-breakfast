@@ -28,17 +28,19 @@ export const cafeterias = [
     name: '학생생활관 1호관',
     operator: '쉐프스키스',
     url: `${BASE}/fixmenu.htm`,
-    // 학교 페이지에 날짜별 메뉴가 없고, 메뉴는 업체 인스타그램에 올라온다.
+    // 학교 페이지에 날짜별 메뉴가 없고, 업체 사이트(chefskiss.co.kr/morning)는 해외 접속이 막혀
+    // 자동 수집이 안 된다. 주 1회 그 페이지 내용을 manual/dorm1.txt 에 붙여 넣는다.
     scrape: false,
+    manual: 'manual/dorm1.txt',
     cheonwon: {
       weekdays: [0, 1, 2, 3, 4, 5],
       hours: '일~금 07:30~09:30 (토요일·공휴일 휴무)',
       price: '1,000원',
-      note: '그날 메뉴는 쉐프스키스 인스타그램에 공지',
+      note: '메뉴는 쉐프스키스 홈페이지·인스타그램에 공지',
     },
     links: [
       { label: '인스타그램', href: 'https://www.instagram.com/chefskiss_jnu/' },
-      { label: '홈페이지', href: 'https://chefskiss.co.kr/' },
+      { label: '홈페이지 메뉴', href: 'https://chefskiss.co.kr/morning' },
     ],
     hours: ['아침 07:30~09:30', '점심 11:00~14:00', '저녁 17:00~19:00'],
     location: '학생생활관 1호관 지하1층 GS25 안쪽',
