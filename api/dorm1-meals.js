@@ -4,9 +4,10 @@
 import { fetchFoodcourt } from '../scripts/chefskiss.mjs';
 
 export default async function handler(req, res) {
+  const debug = req.query?.debug !== undefined;
   try {
-    const result = await fetchFoodcourt();
-    res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=1800');
+    const result = await fetchFoodcourt({ debug });
+    res.setHeader('Cache-Control', debug ? 'no-store' : 'public, s-maxage=1800, stale-while-revalidate=1800');
     res.status(200).json(result);
   } catch (err) {
     res.setHeader('Cache-Control', 'public, s-maxage=300');

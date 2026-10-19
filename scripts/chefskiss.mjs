@@ -194,9 +194,14 @@ export function parseFoodcourt(html, today = kstToday()) {
   return days;
 }
 
-export async function fetchFoodcourt() {
+export async function fetchFoodcourt({ debug = false } = {}) {
   const page = await get(`${ORIGIN}/foodcourt`);
   if (page.status !== 200) throw new Error(`푸드코트 페이지 응답 ${page.status}`);
+  if (debug) {
+    const lines = toLines(page.text);
+    const first = lines.findIndex((l) => FEED_HEAD.test(l));
+    return { lines: lines.slice(Math.max(first - 5, 0), first + 200) };
+  }
   const days = parseFoodcourt(page.text);
   if (days.length === 0) throw new Error('푸드코트 페이지에서 점심·저녁 메뉴를 찾지 못했습니다');
   return { source: `${ORIGIN}/foodcourt`, fetchedAt: new Date().toISOString(), days };
