@@ -46,6 +46,17 @@ export function findPosts(listHtml) {
   return [...seen.entries()].sort((a, b) => Number(b[0]) - Number(a[0])).map(([, url]) => url);
 }
 
+// 진단용: 사이트 안 링크(메뉴 게시판 찾기)
+function siteLinks(html) {
+  const links = new Map();
+  for (const m of html.matchAll(/<a[^>]*href="(\/[^"#]*)"[^>]*>([\s\S]*?)<\/a>/gi)) {
+    const href = decode(m[1]);
+    const text = toLines(m[2]).join(' ');
+    if (!/bmode=|\.(css|js|png|jpg)/.test(href) && !links.has(href)) links.set(href, text);
+  }
+  return [...links].slice(0, 60).map(([href, text]) => `${text} ${href}`.trim());
+}
+
 function mealName(title) {
   return /간편식/.test(title) ? '조식(간편식)' : '조식(일반식)';
 }
@@ -121,6 +132,7 @@ export async function fetchDorm1({ debug = false } = {}) {
   info.listLength = list.text.length;
   if (list.status !== 200) throw Object.assign(new Error(`게시판 응답 ${list.status}`), { debug: info });
 
+  if (debug) info.nav = siteLinks(list.text);
   const posts = findPosts(list.text);
   info.posts = posts.slice(0, 5);
   if (posts.length === 0) {
