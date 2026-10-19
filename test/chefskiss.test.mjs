@@ -34,13 +34,15 @@ test('표가 없고 글자만 있으면 붙여넣기 형식으로 읽어 본다'
 
 test('푸드코트 인스타그램 피드에서 날짜별 점심·저녁을 읽는다', () => {
   const days = parseFoodcourt(fixture('chefskiss-foodcourt.html'), TODAY);
-  assert.deepEqual(days.map((d) => d.date), ['2026-10-18', '2026-10-19']);
-  const mon = days[1];
+  assert.deepEqual(days.map((d) => d.date), ['2026-10-14', '2026-10-18', '2026-10-19']);
+  const mon = days[2];
   assert.deepEqual(mon.meals.map((m) => m.name), ['중식', '석식']);
   assert.equal(mon.meals[0].items[2], '흑돈샤브샤브');
   assert.equal(mon.meals[0].items.length, 9);
   assert.equal(mon.meals[1].items[2], '치킨스테이크');
   // 메뉴 없는 "점심 저녁" 글, 아침밥 글, 해시태그·꼬리말은 들어가지 않는다
-  assert.deepEqual(days[0].meals[0].items, ['백미밥', '콩나물국', '흑돈소금구이', '구운양파지']);
+  assert.deepEqual(days[1].meals[0].items, ['백미밥', '콩나물국', '흑돈소금구이', '구운양파지']);
+  // 제목 없이 붙은 다음 글(두 번째 백미밥부터)과 "더보기"는 버린다
+  assert.deepEqual(days[0].meals, [{ name: '석식', items: ['백미밥', '김치찌개', '장충동왕족발', '쟁반국수', '김치'], cheonwon: false, limit: null, closed: false }]);
   assert.ok(days.every((d) => d.meals.every((m) => !m.cheonwon)));
 });

@@ -142,8 +142,11 @@ function postTitles(html) {
 //   백미밥
 //   감자계란국 ...
 // 같은 끼니가 여러 번 나오면 피드 맨 위(가장 최근 글)를 쓴다. 아침밥 글은 /morning 표로 대신한다.
+// "점심 저녁메뉴입니다"처럼 한 글에 둘 다 적힌 글은 사진뿐이라 건너뛴다.
+// 제목 줄이 빠진 글은 앞 글 아래에 붙어 첫 메뉴(보통 백미밥)가 다시 나오는데,
+// 점심인지 저녁인지 알 수 없으므로 거기서 끊고 버린다.
 const FEED_HEAD = /^(?:(\d{4})\s*년\s*)?(\d{1,2})\s*월\s*(\d{1,2})\s*일\s*(.*?)\s*입니다\.?$/;
-const FEED_STOP = /^(SNS 바로가기|목록|상호|사업자등록번호|연락처|Copyright|이용약관|chefskiss_)/i;
+const FEED_STOP = /^(더보기|SNS 바로가기|목록|상호|사업자등록번호|연락처|Copyright|이용약관|chefskiss_)/i;
 const FEED_MAX_ITEMS = 25;
 const MEAL_ORDER = ['중식', '석식'];
 
@@ -169,10 +172,10 @@ export function parseFoodcourt(html, today = kstToday()) {
     const head = line.match(FEED_HEAD);
     if (head) {
       flush();
-      const kinds = [];
-      if (/점심|중식/.test(head[4])) kinds.push('중식');
-      if (/저녁|석식/.test(head[4])) kinds.push('석식');
-      if (kinds.length === 0) continue;
+      const lunch = /점심|중식/.test(head[4]);
+      const dinner = /저녁|석식/.test(head[4]);
+      if (lunch === dinner) continue;
+      const kinds = [lunch ? '중식' : '석식'];
       const date = head[1]
         ? `${head[1]}-${head[2].padStart(2, '0')}-${head[3].padStart(2, '0')}`
         : resolveDate(Number(head[2]), Number(head[3]), today);
@@ -185,6 +188,10 @@ export function parseFoodcourt(html, today = kstToday()) {
       continue;
     }
     if (/^#|https?:|@/.test(line)) continue;
+    if (current.items.length >= 3 && line === current.items[0]) {
+      flush();
+      continue;
+    }
     current.items.push(line);
   }
   flush();
