@@ -5,6 +5,9 @@
   "functions": {
     "api/dorm1.js": {
       "maxDuration": 30
+    },
+    "api/dorm1-meals.js": {
+      "maxDuration": 30
     }
   },
   "outputDirectory": "public",

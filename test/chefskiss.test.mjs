@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { findPosts, parsePost } from '../scripts/chefskiss.mjs';
+import { findPosts, parsePost, parseFoodcourt } from '../scripts/chefskiss.mjs';
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
 const TODAY = new Date(Date.UTC(2026, 9, 19));
@@ -30,4 +30,17 @@ test('표가 없고 글자만 있으면 붙여넣기 형식으로 읽어 본다'
   const html = `<div>${fixture('chefskiss-paste.txt').split('\n').map((l) => `<p>${l}</p>`).join('')}</div>`;
   const { days } = parsePost(html, TODAY);
   assert.equal(days.length, 6);
+});
+
+test('푸드코트 인스타그램 피드에서 날짜별 점심·저녁을 읽는다', () => {
+  const days = parseFoodcourt(fixture('chefskiss-foodcourt.html'), TODAY);
+  assert.deepEqual(days.map((d) => d.date), ['2026-10-18', '2026-10-19']);
+  const mon = days[1];
+  assert.deepEqual(mon.meals.map((m) => m.name), ['중식', '석식']);
+  assert.equal(mon.meals[0].items[2], '흑돈샤브샤브');
+  assert.equal(mon.meals[0].items.length, 9);
+  assert.equal(mon.meals[1].items[2], '치킨스테이크');
+  // 메뉴 없는 "점심 저녁" 글, 아침밥 글, 해시태그·꼬리말은 들어가지 않는다
+  assert.deepEqual(days[0].meals[0].items, ['백미밥', '콩나물국', '흑돈소금구이', '구운양파지']);
+  assert.ok(days.every((d) => d.meals.every((m) => !m.cheonwon)));
 });

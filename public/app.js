@@ -154,7 +154,9 @@ function allMenus() {
     if (day && filter.test && meals.length === 0) continue;
 
     blocks.push(el('div', { class: 'cafe' },
-      el('h3', { class: 'cafe-title' }, cafe.name, el('a', { href: cafe.url, target: '_blank', rel: 'noopener' }, '원본 ↗')),
+      el('h3', { class: 'cafe-title' }, cafe.name, el('a', { href: cafe.mealsSource ?? cafe.url, target: '_blank', rel: 'noopener' }, '원본 ↗')),
+      cafe.mealsSource && state.date >= kstToday() && !day?.meals.some((m) => m.name === '중식')
+        && el('p', { class: 'meta' }, '1호관 점심·저녁 메뉴는 보통 점심시간 무렵 인스타그램에 올라옵니다.'),
       cafe.error && el('p', { class: 'warn' }, `최근 갱신 실패 — ${formatTime(cafe.updatedAt)} 데이터입니다. 원본을 확인하세요.`),
       day
         ? el('div', { class: 'cards' }, meals.map((meal) => el('article', { class: `card${meal.closed ? ' off' : ''}` },
@@ -207,28 +209,48 @@ async function main() {
   loadDorm1();
 }
 
-// 1호관 메뉴는 해외 접속이 막힌 업체 사이트에 있어, 서울 리전 함수(/api/dorm1)로 따로 받는다.
+// 1호관 메뉴는 해외 접속이 막힌 업체 사이트에 있어, 서울 리전 함수로 따로 받는다.
+//   /api/dorm1        천원의 아침밥 (일반식·간편식)
+//   /api/dorm1-meals  점심·저녁 (인스타그램 피드)
 // 실패하면 menus.json 에 있는 값(직접 입력분)을 그대로 쓴다.
+async function getJson(url) {
+  try {
+    const res = await fetch(url);
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null; // 함수가 없거나(로컬 실행) 실패하면 조용히 넘어간다
+  }
+}
+
 async function loadDorm1() {
   const cafe = state.data.cafeterias.find((c) => c.id === 'dorm1');
   if (!cafe) return;
-  try {
-    const res = await fetch('api/dorm1');
-    if (!res.ok) return;
-    const live = await res.json();
-    if (!live.days?.length) return;
-    const byDate = new Map(cafe.days.map((d) => [d.date, d]));
-    for (const day of live.days) byDate.set(day.date, day);
-    cafe.days = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  const [breakfast, meals] = await Promise.all([getJson('api/dorm1'), getJson('api/dorm1-meals')]);
+
+  const byDate = new Map(cafe.days.map((d) => [d.date, d]));
+  if (breakfast?.days?.length) {
+    for (const day of breakfast.days) byDate.set(day.date, day);
     cafe.live = true;
-    if (live.source) cafe.links = [{ label: '이번 주 원본 글', href: live.source }, ...(cafe.links ?? []).filter((l) => !/morning/.test(l.href))];
-    const keep = state.date;
-    const dates = allDates(state.data);
-    state.date = dates.includes(keep) ? keep : pickDefaultDate(dates);
-    render();
-  } catch {
-    // 함수가 없거나(로컬 실행) 실패하면 조용히 넘어간다
+    if (breakfast.source) {
+      cafe.links = [{ label: '이번 주 원본 글', href: breakfast.source }, ...(cafe.links ?? []).filter((l) => !/morning/.test(l.href))];
+    }
   }
+  if (meals?.days?.length) {
+    for (const day of meals.days) {
+      const target = byDate.get(day.date) ?? { date: day.date, weekday: day.weekday, meals: [] };
+      const names = new Set(day.meals.map((m) => m.name));
+      target.meals = target.meals.filter((m) => !names.has(m.name)).concat(day.meals);
+      byDate.set(day.date, target);
+    }
+    cafe.mealsSource = meals.source;
+  }
+  if (!breakfast?.days?.length && !meals?.days?.length) return;
+
+  cafe.days = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  const keep = state.date;
+  const dates = allDates(state.data);
+  state.date = dates.includes(keep) ? keep : pickDefaultDate(dates);
+  render();
 }
 
 main();

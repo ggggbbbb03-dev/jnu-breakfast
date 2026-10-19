@@ -8,7 +8,7 @@
 | 식당 | 원본 | 천원의 아침밥 | 메뉴 수집 |
 | --- | --- | --- | --- |
 | 학생생활관 6호관 | [fixfirst.htm](https://www.jejunu.ac.kr/camp/stud/foodmenu/fixfirst.htm) | 월~토, 간편식·일반식 | 자동 |
-| 학생생활관 1호관 | [chefskiss.co.kr/morning](https://chefskiss.co.kr/morning) | 일~금, 일반식·간편식 | 자동 (Vercel 서울 리전 함수) + 예비로 직접 입력 |
+| 학생생활관 1호관 | [chefskiss.co.kr/morning](https://chefskiss.co.kr/morning) | 일~금, 일반식·간편식 | 자동 (Vercel 서울 리전 함수, 점심·저녁 포함) + 예비로 직접 입력 |
 | 백두관 | [firstfixmenu.htm](https://www.jejunu.ac.kr/camp/stud/foodmenu/firstfixmenu.htm) | 표기 없음 | 자동 |
 | 사라캠퍼스 | [secondfixmenu.htm](https://www.jejunu.ac.kr/camp/stud/foodmenu/secondfixmenu.htm) | 없음 | 자동 |
 
@@ -21,6 +21,8 @@
 그래서 Vercel **서울 리전(icn1)** 에서 도는 [`api/dorm1.js`](api/dorm1.js)가 방문 시점에
 `/morning` 게시판의 최신 글을 읽어 표를 날짜별 메뉴로 바꿉니다. 결과는 CDN 에 3시간 캐시됩니다.
 
+- 점심·저녁은 `/foodcourt` 페이지에 붙어 있는 인스타그램 피드 글("2026년 10월 19일 점심메뉴입니다" …)을
+  [`api/dorm1-meals.js`](api/dorm1-meals.js)가 읽습니다. 점심 무렵 올라오므로 30분 캐시합니다.
 - 상태 확인: `https://<배포 주소>/api/dorm1?debug` (캐시 없이 실행하고 어디서 막혔는지 보여 줌)
 - 이 함수가 실패하면 [`manual/dorm1.txt`](manual/dorm1.txt) 에 손으로 넣은 메뉴를 씁니다.
   게시글 내용을 그대로 붙여 넣어도 되지만, 간편식처럼 날짜 경계를 알 수 없는 표는
@@ -33,7 +35,8 @@ scripts/parse.mjs        식단 표(#plannerWrap) → JSON
 scripts/scrape.mjs       학교 페이지를 받아 public/data/menus.json 생성
 scripts/manual.mjs       manual/*.txt (손으로 넣은 메뉴) → JSON
 scripts/chefskiss.mjs    쉐프스키스 게시판 → JSON (api/dorm1.js 에서 사용)
-api/dorm1.js             1호관 메뉴 함수 (서울 리전)
+api/dorm1.js             1호관 천원의 아침밥 함수 (서울 리전)
+api/dorm1-meals.js       1호관 점심·저녁 함수 (서울 리전)
 scripts/cafeterias.mjs   식당 목록·운영 정보
 manual/dorm1.txt         1호관 주간 메뉴 (직접 입력)
 public/                  정적 사이트 (Vercel 이 그대로 배포)

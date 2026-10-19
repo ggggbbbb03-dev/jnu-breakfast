@@ -5,7 +5,7 @@
 // 게시글 안에는 "천원의 아침밥 식단", "천원의 아침밥 간편식" 제목 아래에
 // 요일 칸(일( 10/18), 월( 19일) …)과 그 아래 날짜별 메뉴 칸이 있는 표가 있다.
 
-import { kstToday } from './parse.mjs';
+import { kstToday, resolveDate } from './parse.mjs';
 import { gridDates, isGridDate, parseManual } from './manual.mjs';
 
 export const BOARD_URL = 'https://chefskiss.co.kr/morning';
@@ -135,6 +135,71 @@ function postTitles(html) {
   return [...html.matchAll(/<a[^>]*href="[^"]*bmode=view[^"]*"[^>]*>([\s\S]*?)<\/a>/gi)]
     .map((m) => toLines(m[1]).join(' '))
     .filter(Boolean);
+}
+
+// /foodcourt 페이지에는 인스타그램 피드가 글자로 들어 있다:
+//   2026년 10월 19일 점심메뉴입니다
+//   백미밥
+//   감자계란국 ...
+// 같은 끼니가 여러 번 나오면 피드 맨 위(가장 최근 글)를 쓴다. 아침밥 글은 /morning 표로 대신한다.
+const FEED_HEAD = /^(?:(\d{4})\s*년\s*)?(\d{1,2})\s*월\s*(\d{1,2})\s*일\s*(.*?)\s*입니다\.?$/;
+const FEED_STOP = /^(SNS 바로가기|목록|상호|사업자등록번호|연락처|Copyright|이용약관|chefskiss_)/i;
+const FEED_MAX_ITEMS = 25;
+const MEAL_ORDER = ['중식', '석식'];
+
+export function parseFoodcourt(html, today = kstToday()) {
+  const byDate = new Map();
+  let current = null;
+
+  const flush = () => {
+    if (!current) return;
+    const { date, kinds, items } = current;
+    current = null;
+    if (items.length === 0) return;
+    const day = byDate.get(date) ?? { date, weekday: null, meals: [] };
+    for (const name of kinds) {
+      if (!day.meals.some((m) => m.name === name)) {
+        day.meals.push({ name, items: [...items], cheonwon: false, limit: null, closed: false });
+      }
+    }
+    byDate.set(date, day);
+  };
+
+  for (const line of toLines(html)) {
+    const head = line.match(FEED_HEAD);
+    if (head) {
+      flush();
+      const kinds = [];
+      if (/점심|중식/.test(head[4])) kinds.push('중식');
+      if (/저녁|석식/.test(head[4])) kinds.push('석식');
+      if (kinds.length === 0) continue;
+      const date = head[1]
+        ? `${head[1]}-${head[2].padStart(2, '0')}-${head[3].padStart(2, '0')}`
+        : resolveDate(Number(head[2]), Number(head[3]), today);
+      current = { date, kinds, items: [] };
+      continue;
+    }
+    if (!current) continue;
+    if (FEED_STOP.test(line) || current.items.length >= FEED_MAX_ITEMS) {
+      flush();
+      continue;
+    }
+    if (/^#|https?:|@/.test(line)) continue;
+    current.items.push(line);
+  }
+  flush();
+
+  const days = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  for (const day of days) day.meals.sort((a, b) => MEAL_ORDER.indexOf(a.name) - MEAL_ORDER.indexOf(b.name));
+  return days;
+}
+
+export async function fetchFoodcourt() {
+  const page = await get(`${ORIGIN}/foodcourt`);
+  if (page.status !== 200) throw new Error(`푸드코트 페이지 응답 ${page.status}`);
+  const days = parseFoodcourt(page.text);
+  if (days.length === 0) throw new Error('푸드코트 페이지에서 점심·저녁 메뉴를 찾지 못했습니다');
+  return { source: `${ORIGIN}/foodcourt`, fetchedAt: new Date().toISOString(), days };
 }
 
 async function get(url) {
