@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>제주대 천원의 아침밥</title>
+  <meta name="description" content="제주대학교 천원의 아침밥과 식당별 식단을 한 화면에서 봅니다.">
+  <meta name="theme-color" content="#f6efe4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1b1814" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍚</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <p class="eyebrow">제주대학교 · 비공식 모아보기</p>
+      <h1>천원의 아침밥</h1>
+      <p class="sub" id="today-label"></p>
+    </div>
+    <nav class="days wrap" id="days" aria-label="날짜 선택"></nav>
+  </header>
+
+  <main class="wrap">
+    <section aria-labelledby="h-cheonwon">
+      <h2 id="h-cheonwon">천원의 아침밥</h2>
+      <div class="cards" id="cheonwon"></div>
+    </section>
+
+    <section aria-labelledby="h-all">
+      <div class="section-head">
+        <h2 id="h-all">식당별 식단</h2>
+        <div class="seg" role="tablist" id="meal-filter"></div>
+      </div>
+      <div id="all"></div>
+    </section>
+
+    <section aria-labelledby="h-info">
+      <h2 id="h-info">운영 정보</h2>
+      <div class="info" id="info"></div>
+    </section>
+  </main>
+
+  <footer class="wrap foot" id="foot"></footer>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
