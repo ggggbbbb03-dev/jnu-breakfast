@@ -11,7 +11,12 @@
   <meta property="og:locale" content="ko_KR">
   <meta name="theme-color" content="#f7f1e8" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#191612" media="(prefers-color-scheme: dark)">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍚</text></svg>">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="제주대 학식">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="style.css">
@@ -23,7 +28,10 @@
         <p class="eyebrow">제주대학교 학식 모아보기</p>
         <h1 id="title">오늘의 학식</h1>
       </div>
-      <p class="now" id="now" aria-live="polite"></p>
+      <div class="top-side">
+        <button class="install" id="install" type="button" hidden>앱 설치</button>
+        <p class="now" id="now" aria-live="polite"></p>
+      </div>
     </div>
     <nav class="wrap days" id="days" aria-label="날짜 선택"></nav>
     <div class="wrap">
@@ -43,6 +51,12 @@
   </section>
 
   <footer class="wrap foot" id="foot"></footer>
+
+  <dialog class="sheet" id="install-guide" aria-labelledby="guide-title">
+    <h2 id="guide-title">홈 화면에 추가하기</h2>
+    <ol id="guide-steps"></ol>
+    <form method="dialog"><button class="sheet-close">확인</button></form>
+  </dialog>
 
   <script src="app.js" type="module"></script>
 </body>

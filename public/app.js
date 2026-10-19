@@ -333,4 +333,55 @@ async function loadDorm1() {
   render();
 }
 
+/* 앱 설치 (홈 화면에 추가) */
+// - 안드로이드 크롬·삼성 인터넷: 브라우저가 주는 설치 창을 버튼으로 띄운다
+// - 아이폰: 설치 창이 없어서 공유 메뉴 → '홈 화면에 추가' 안내를 보여 준다
+// - 카카오톡 등 앱 안 브라우저: 설치가 안 되므로 다른 브라우저로 여는 법을 안내한다
+function setupInstall() {
+  const button = $('install');
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (standalone) return;
+
+  const ua = navigator.userAgent;
+  const ios = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  const inApp = /KAKAOTALK|Instagram|FBAN|FBAV|NAVER|Line\//i.test(ua);
+  let deferred = null;
+
+  const guide = (steps) => {
+    $('guide-steps').replaceChildren(...steps.map((t) => el('li', {}, t)));
+    $('install-guide').showModal();
+  };
+
+  if (inApp) {
+    button.hidden = false;
+    button.onclick = () => guide(ios
+      ? ['오른쪽 아래 공유(또는 ⋯) 버튼을 누르세요.', "'Safari로 열기'를 고르세요.", "Safari에서 공유 버튼 → '홈 화면에 추가'를 누르세요."]
+      : ['오른쪽 위(또는 아래) ⋮ 버튼을 누르세요.', "'다른 브라우저로 열기'를 고르세요.", "크롬에서 다시 '앱 설치' 버튼을 누르세요."]);
+    return;
+  }
+  if (ios) {
+    button.hidden = false;
+    button.onclick = () => guide(['화면 아래(또는 위) 공유 버튼 □↑ 을 누르세요.', "메뉴를 내려 '홈 화면에 추가'를 누르세요.", "오른쪽 위 '추가'를 누르면 홈 화면에 아이콘이 생깁니다."]);
+    return;
+  }
+  addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    deferred = event;
+    button.hidden = false;
+  });
+  button.onclick = async () => {
+    if (!deferred) return;
+    deferred.prompt();
+    await deferred.userChoice;
+    deferred = null;
+    button.hidden = true;
+  };
+  addEventListener('appinstalled', () => { button.hidden = true; });
+}
+
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
+setupInstall();
 main();

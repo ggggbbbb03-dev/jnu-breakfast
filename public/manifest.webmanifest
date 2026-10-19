@@ -1,0 +1,18 @@
+{
+  "name": "제주대 학식 · 천원의 아침밥",
+  "short_name": "제주대 학식",
+  "description": "제주대학교 천원의 아침밥과 학생식당 식단을 한 화면에서",
+  "lang": "ko",
+  "start_url": "/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f1e8",
+  "theme_color": "#d65a24",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#d65a24"/>
+  <!-- 젓가락 -->
+  <rect x="300" y="70" width="18" height="190" rx="9" fill="#fde5d6" transform="rotate(28 309 165)"/>
+  <rect x="334" y="78" width="18" height="190" rx="9" fill="#fde5d6" transform="rotate(34 343 173)"/>
+  <!-- 밥 -->
+  <path d="M128 262c0-62 57-104 128-104s128 42 128 104z" fill="#ffffff"/>
+  <circle cx="198" cy="214" r="9" fill="#f3e6d6"/><circle cx="252" cy="196" r="9" fill="#f3e6d6"/>
+  <circle cx="306" cy="218" r="9" fill="#f3e6d6"/><circle cx="226" cy="240" r="8" fill="#f3e6d6"/>
+  <circle cx="282" cy="244" r="8" fill="#f3e6d6"/>
+  <!-- 그릇 -->
+  <path d="M96 258h320c0 86-66 146-160 146S96 344 96 258z" fill="#2a2118"/>
+  <rect x="196" y="398" width="120" height="22" rx="11" fill="#2a2118"/>
+  <path d="M120 286h272" stroke="#d65a24" stroke-width="10" stroke-linecap="round" opacity=".55"/>
+</svg>
