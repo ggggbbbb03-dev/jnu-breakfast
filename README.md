@@ -8,22 +8,23 @@
 | 식당 | 원본 | 천원의 아침밥 | 메뉴 수집 |
 | --- | --- | --- | --- |
 | 학생생활관 6호관 | [fixfirst.htm](https://www.jejunu.ac.kr/camp/stud/foodmenu/fixfirst.htm) | 월~토, 간편식·일반식 | 자동 |
-| 학생생활관 1호관 | [chefskiss.co.kr/morning](https://chefskiss.co.kr/morning) | 일~금 | **주 1회 직접 입력** (아래 참고) |
+| 학생생활관 1호관 | [chefskiss.co.kr/morning](https://chefskiss.co.kr/morning) | 일~금, 일반식·간편식 | 자동 (Vercel 서울 리전 함수) + 예비로 직접 입력 |
 | 백두관 | [firstfixmenu.htm](https://www.jejunu.ac.kr/camp/stud/foodmenu/firstfixmenu.htm) | 표기 없음 | 자동 |
 | 사라캠퍼스 | [secondfixmenu.htm](https://www.jejunu.ac.kr/camp/stud/foodmenu/secondfixmenu.htm) | 없음 | 자동 |
 
 운영시간·가격 같은 안내 문구는 [`scripts/cafeterias.mjs`](scripts/cafeterias.mjs)에 손으로 옮겨 두었습니다 (`CHECKED_AT` 날짜 기준).
 학교 안내가 바뀌면 이 파일을 고쳐 주세요.
 
-## 1호관 메뉴 넣기 (주 1회)
+## 1호관 (쉐프스키스)
 
-쉐프스키스 홈페이지는 해외 접속이 막혀 있어 GitHub Actions 로 자동 수집할 수 없습니다.
+쉐프스키스 사이트는 해외 접속이 막혀 GitHub Actions(미국)로는 읽을 수 없습니다.
+그래서 Vercel **서울 리전(icn1)** 에서 도는 [`api/dorm1.js`](api/dorm1.js)가 방문 시점에
+`/morning` 게시판의 최신 글을 읽어 표를 날짜별 메뉴로 바꿉니다. 결과는 CDN 에 3시간 캐시됩니다.
 
-1. https://chefskiss.co.kr/morning 에서 한 주 메뉴를 복사
-2. GitHub 에서 [`manual/dorm1.txt`](manual/dorm1.txt) → 연필(✏️) 버튼 → 붙여 넣기 → **Commit changes**
-3. 저장하면 수집 작업이 바로 돌아 1~2분 뒤 사이트에 반영됩니다.
-
-날짜 줄(`10/20 (월)`, `10월 20일` 등) 다음 줄들을 그날 메뉴로 읽습니다. 한 줄에 쉼표나 `/` 로 여러 개를 적어도 됩니다.
+- 상태 확인: `https://<배포 주소>/api/dorm1?debug` (캐시 없이 실행하고 어디서 막혔는지 보여 줌)
+- 이 함수가 실패하면 [`manual/dorm1.txt`](manual/dorm1.txt) 에 손으로 넣은 메뉴를 씁니다.
+  게시글 내용을 그대로 붙여 넣어도 되지만, 간편식처럼 날짜 경계를 알 수 없는 표는
+  `10/20 (월)` 같은 날짜 줄 형식으로 정리해야 읽힙니다.
 
 ## 구조
 
@@ -31,6 +32,8 @@
 scripts/parse.mjs        식단 표(#plannerWrap) → JSON
 scripts/scrape.mjs       학교 페이지를 받아 public/data/menus.json 생성
 scripts/manual.mjs       manual/*.txt (손으로 넣은 메뉴) → JSON
+scripts/chefskiss.mjs    쉐프스키스 게시판 → JSON (api/dorm1.js 에서 사용)
+api/dorm1.js             1호관 메뉴 함수 (서울 리전)
 scripts/cafeterias.mjs   식당 목록·운영 정보
 manual/dorm1.txt         1호관 주간 메뉴 (직접 입력)
 public/                  정적 사이트 (Vercel 이 그대로 배포)

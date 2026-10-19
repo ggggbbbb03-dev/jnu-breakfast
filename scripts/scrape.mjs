@@ -67,8 +67,13 @@ for (const cafe of cafeterias) {
   if (manual) {
     try {
       const path = fileURLToPath(new URL(`../${manual}`, import.meta.url));
-      entry.days = parseManual(await readFile(path, 'utf8'), '조식(천원의 아침밥)', today);
+      const { days, errors } = parseManual(await readFile(path, 'utf8'), today);
+      entry.days = days;
       entry.manual = true;
+      if (errors.length) {
+        entry.error = errors.join(' / ');
+        console.error(`[${cafe.id}] ${entry.error}`);
+      }
     } catch (err) {
       if (err.code !== 'ENOENT') {
         entry.error = `${manual}: ${err.message}`;

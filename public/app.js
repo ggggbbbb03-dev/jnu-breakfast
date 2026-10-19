@@ -104,8 +104,9 @@ function cheonwonCards() {
             el('span', { class: 'badge muted' }, cafe.cheonwon.hours.split(' (')[0]),
           ),
           itemList(meal.items),
-          cafe.manual && el('p', { class: 'meta' }, '업체 홈페이지 메뉴를 옮겨 적은 것입니다.'),
-          cafe.manual && cafe.links && el('div', { class: 'links' },
+          cafe.live && el('p', { class: 'meta' }, '쉐프스키스 홈페이지에서 자동으로 가져온 메뉴입니다.'),
+          !cafe.live && cafe.manual && el('p', { class: 'meta' }, '업체 홈페이지 메뉴를 옮겨 적은 것입니다.'),
+          (cafe.live || cafe.manual) && cafe.links && el('div', { class: 'links' },
             cafe.links.map((l) => el('a', { href: l.href, target: '_blank', rel: 'noopener' }, `${l.label} ↗`))),
         ));
       }
@@ -203,6 +204,31 @@ async function main() {
   }
   state.date = pickDefaultDate(allDates(state.data));
   render();
+  loadDorm1();
+}
+
+// 1호관 메뉴는 해외 접속이 막힌 업체 사이트에 있어, 서울 리전 함수(/api/dorm1)로 따로 받는다.
+// 실패하면 menus.json 에 있는 값(직접 입력분)을 그대로 쓴다.
+async function loadDorm1() {
+  const cafe = state.data.cafeterias.find((c) => c.id === 'dorm1');
+  if (!cafe) return;
+  try {
+    const res = await fetch('api/dorm1');
+    if (!res.ok) return;
+    const live = await res.json();
+    if (!live.days?.length) return;
+    const byDate = new Map(cafe.days.map((d) => [d.date, d]));
+    for (const day of live.days) byDate.set(day.date, day);
+    cafe.days = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+    cafe.live = true;
+    if (live.source) cafe.links = [{ label: '이번 주 원본 글', href: live.source }, ...(cafe.links ?? []).filter((l) => !/morning/.test(l.href))];
+    const keep = state.date;
+    const dates = allDates(state.data);
+    state.date = dates.includes(keep) ? keep : pickDefaultDate(dates);
+    render();
+  } catch {
+    // 함수가 없거나(로컬 실행) 실패하면 조용히 넘어간다
+  }
 }
 
 main();

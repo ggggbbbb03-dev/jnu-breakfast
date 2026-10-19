@@ -29,7 +29,8 @@ export const cafeterias = [
     operator: '쉐프스키스',
     url: `${BASE}/fixmenu.htm`,
     // 학교 페이지에 날짜별 메뉴가 없고, 업체 사이트(chefskiss.co.kr/morning)는 해외 접속이 막혀
-    // 자동 수집이 안 된다. 주 1회 그 페이지 내용을 manual/dorm1.txt 에 붙여 넣는다.
+    // GitHub Actions 로는 못 읽는다. 사이트가 서울 리전 함수(api/dorm1.js)로 직접 읽고,
+    // 그게 실패할 때를 위해 manual/dorm1.txt 에 손으로 넣은 메뉴를 함께 쓴다.
     scrape: false,
     manual: 'manual/dorm1.txt',
     cheonwon: {
