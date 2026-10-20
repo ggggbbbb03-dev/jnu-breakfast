@@ -321,3 +321,49 @@ main { padding-top: 16px; padding-bottom: 8px; min-height: 50vh; }
   font-weight: 700;
   cursor: pointer;
 }
+
+/* 식당 순서 바꾸기 */
+.tools { display: flex; justify-content: flex-end; margin: -4px 0 8px; }
+.text-button {
+  border: 0;
+  background: none;
+  padding: 6px 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.text-button:hover { color: var(--text); }
+.sheet-sub { margin: -6px 0 12px; font-size: 13px; color: var(--muted); }
+.order-list { list-style: none; margin: 0 0 16px; padding: 0; }
+.order-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.order-list li:last-child { border-bottom: 0; }
+.order-num { width: 20px; color: var(--faint); font-weight: 700; font-variant-numeric: tabular-nums; }
+.order-name { flex: 1; font-weight: 600; }
+.order-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 17px;
+  cursor: pointer;
+}
+.order-btn:disabled { opacity: 0.35; cursor: default; }
+.sheet-row { display: flex; gap: 8px; }
+.sheet-row form { flex: 1; }
+.sheet-secondary {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+}

@@ -58,6 +58,16 @@
     <form method="dialog"><button class="sheet-close">확인</button></form>
   </dialog>
 
+  <dialog class="sheet" id="order-sheet" aria-labelledby="order-title">
+    <h2 id="order-title">식당 순서 바꾸기</h2>
+    <p class="sheet-sub">위에 둔 식당이 먼저 나옵니다. 이 휴대폰에만 저장돼요.</p>
+    <ol class="order-list" id="order-list"></ol>
+    <div class="sheet-row">
+      <button type="button" class="sheet-secondary" id="order-reset">기본 순서로</button>
+      <form method="dialog"><button class="sheet-close">완료</button></form>
+    </div>
+  </dialog>
+
   <script src="app.js" type="module"></script>
   <!-- Vercel Web Analytics: 대시보드에서 Analytics 를 켜야 집계된다 (쿠키 없음) -->
   <script defer src="/_vercel/insights/script.js"></script>

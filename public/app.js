@@ -11,7 +11,35 @@ const NIGHT_FROM = 19 * 60 + 30;
 // 밥·김치·기본 샐러드처럼 매일 나오는 것은 흐리게, 그 다음 첫 메뉴(대표 메뉴)는 굵게
 const BASIC = /^(백미밥|흑미밥|보리밥|현미밥|잡곡밥|추가밥|.*김치|깍두기|석박지|단무지|오이피클|피클|(그린|믹스|양배추)샐러드.*|샐러드 \+.*|시리얼.*|씨리얼.*|식빵&잼|셀프토스트.*|우유)$/;
 
-const state = { data: null, date: null, meal: null };
+// 식당 순서는 이 휴대폰(브라우저)에만 저장한다. 저장소가 막혀 있으면 기본 순서를 쓴다.
+const ORDER_KEY = 'jnu-breakfast:order';
+const state = { data: null, date: null, meal: null, order: loadOrder() };
+
+function loadOrder() {
+  try {
+    const value = JSON.parse(localStorage.getItem(ORDER_KEY));
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+function saveOrder(order) {
+  state.order = order;
+  try {
+    if (order.length) localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+    else localStorage.removeItem(ORDER_KEY);
+  } catch {
+    // 저장이 안 돼도 이번 방문 동안은 바뀐 순서를 쓴다
+  }
+}
+// 사용자가 정한 순서대로. 목록에 없는 식당(새로 추가된 식당 등)은 기본 순서로 뒤에 붙인다.
+function orderedCafes() {
+  const rank = (cafe) => {
+    const i = state.order.indexOf(cafe.id);
+    return i === -1 ? state.order.length + state.data.cafeterias.indexOf(cafe) : i;
+  };
+  return [...state.data.cafeterias].sort((a, b) => rank(a) - rank(b));
+}
 
 const $ = (id) => document.getElementById(id);
 
@@ -38,6 +66,10 @@ function kstNow() {
 
 function nextDay(iso) {
   return new Date(Date.parse(`${iso}T00:00:00Z`) + 864e5).toISOString().slice(0, 10);
+}
+
+function prevDay(iso) {
+  return new Date(Date.parse(`${iso}T00:00:00Z`) - 864e5).toISOString().slice(0, 10);
 }
 
 function isNight() {
@@ -84,12 +116,14 @@ function statusOf(range, date) {
   return { cls: 'done', text: '마감' };
 }
 
-// 식단이 올라온 날짜들 + 오늘 (밤에는 내일도)
+// 어제부터 식단이 올라온 날짜들 + 오늘 (밤에는 내일도).
+// 1호관 인스타그램 피드에는 지난 글이 남아 있어, 지난 날짜는 어제까지만 보여 준다.
 function allDates(data) {
   const today = kstNow().date;
+  const from = prevDay(today);
   const set = new Set([today]);
   if (isNight()) set.add(nextDay(today));
-  for (const cafe of data.cafeterias) for (const day of cafe.days) set.add(day.date);
+  for (const cafe of data.cafeterias) for (const day of cafe.days) if (day.date >= from) set.add(day.date);
   return [...set].sort();
 }
 
@@ -166,9 +200,7 @@ function renderDays() {
 function renderTabs() {
   $('tabs').replaceChildren(
     ...MEALS.map((meal) => {
-      const count = state.data.cafeterias
-        .filter((c) => !(holidayOf(state.date) && c.closedOnHolidays))
-        .filter((c) => mealsFor(c, state.date, meal.id).some((m) => !m.closed)).length;
+      const count = plan(meal.id).shown.length;
       return el('button', {
         class: 'tab',
         role: 'tab',
@@ -244,17 +276,26 @@ function runsOn(cafe, mealId, date) {
   return Boolean(cafe.times?.[mealId]);
 }
 
-function renderMain() {
-  const cards = [];
+// 선택한 날짜·끼니에 어떤 식당을 카드로 보여 주고(shown), 어떤 식당을 '미운영'으로 적을지(closed).
+// 탭의 'N곳' 숫자와 실제 카드 수가 같도록 둘 다 이 함수를 쓴다.
+function plan(mealId) {
+  const shown = [];
   const closed = [];
   const holiday = holidayOf(state.date);
-  for (const cafe of state.data.cafeterias) {
-    const meals = mealsFor(cafe, state.date, state.meal);
+  for (const cafe of orderedCafes()) {
+    const meals = mealsFor(cafe, state.date, mealId);
     if (holiday && cafe.closedOnHolidays) closed.push(`${cafe.name}(공휴일 휴무)`);
-    else if (meals.some((m) => !m.closed)) cards.push(cafeCard(cafe, meals));
-    else if (cafe.id === 'dorm1' && runsOn(cafe, state.meal, state.date) && state.date >= kstNow().date) cards.push(pendingCard(cafe));
-    else if (runsOn(cafe, state.meal, state.date) || meals.length) closed.push(cafe.name);
+    else if (meals.some((m) => !m.closed)) shown.push({ cafe, meals });
+    else if (cafe.id === 'dorm1' && runsOn(cafe, mealId, state.date) && state.date >= kstNow().date) shown.push({ cafe, pending: true });
+    else if (runsOn(cafe, mealId, state.date) || meals.length) closed.push(cafe.name);
   }
+  return { shown, closed };
+}
+
+function renderMain() {
+  const { shown, closed } = plan(state.meal);
+  const cards = shown.map((s) => (s.pending ? pendingCard(s.cafe) : cafeCard(s.cafe, s.meals)));
+  const holiday = holidayOf(state.date);
 
   const children = [];
   if (holiday) {
@@ -267,6 +308,10 @@ function renderMain() {
       el('span', { class: 'big', 'aria-hidden': 'true' }, '🍚'),
       el('span', {}, el('strong', {}, '천원의 아침밥'), ' — 재학생은 아침 한 끼 1,000원')));
   }
+  if (cards.length > 1) {
+    children.push(el('div', { class: 'tools' },
+      el('button', { class: 'text-button', type: 'button', onclick: openOrder }, '↕ 식당 순서 바꾸기')));
+  }
   children.push(cards.length
     ? el('div', { class: 'grid' }, cards)
     : el('div', { class: 'empty-state' },
@@ -276,9 +321,46 @@ function renderMain() {
   $('main').replaceChildren(...children);
 }
 
+/* 식당 순서 바꾸기 */
+function openOrder() {
+  renderOrderList();
+  $('order-sheet').showModal();
+}
+
+function moveCafe(id, delta) {
+  const ids = orderedCafes().map((c) => c.id);
+  const i = ids.indexOf(id);
+  const j = i + delta;
+  if (j < 0 || j >= ids.length) return;
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  saveOrder(ids);
+  renderOrderList();
+  renderMain();
+  renderInfo();
+  // 방금 누른 버튼에 초점을 유지해 연달아 누르기 쉽게
+  $('order-list').querySelector(`[data-id="${id}"] [data-dir="${delta}"]`)?.focus();
+}
+
+function renderOrderList() {
+  const cafes = orderedCafes();
+  $('order-list').replaceChildren(...cafes.map((cafe, i) => el('li', { 'data-id': cafe.id },
+    el('span', { class: 'order-num' }, i + 1),
+    el('span', { class: 'order-name' }, cafe.name),
+    el('button', { type: 'button', class: 'order-btn', 'data-dir': '-1', 'aria-label': `${cafe.name} 위로`, disabled: i === 0, onclick: () => moveCafe(cafe.id, -1) }, '↑'),
+    el('button', { type: 'button', class: 'order-btn', 'data-dir': '1', 'aria-label': `${cafe.name} 아래로`, disabled: i === cafes.length - 1, onclick: () => moveCafe(cafe.id, 1) }, '↓'),
+  )));
+}
+
+function resetOrder() {
+  saveOrder([]);
+  renderOrderList();
+  renderMain();
+  renderInfo();
+}
+
 /* 식당 정보 · 꼬리말 */
 function renderInfo() {
-  $('info').replaceChildren(...state.data.cafeterias.map((cafe) => el('details', {},
+  $('info').replaceChildren(...orderedCafes().map((cafe) => el('details', {},
     el('summary', {}, cafe.name, el('span', {}, cafe.operator)),
     el('ul', {}, cafe.hours.map((h) => el('li', {}, h))),
     cafe.cheonwon && el('p', {}, `천원의 아침밥: ${cafe.cheonwon.hours} · ${cafe.cheonwon.price}`),
@@ -318,6 +400,7 @@ async function main() {
   state.meal = pickDefaultMeal();
   render();
   renderInfo();
+  $('order-reset').onclick = resetOrder;
   loadDorm1();
   // 운영 상태 표시를 1분마다 새로 고친다
   setInterval(() => { renderNow(); renderMain(); }, 60_000);
