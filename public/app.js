@@ -303,11 +303,6 @@ function renderMain() {
       el('span', { class: 'big', 'aria-hidden': 'true' }, '🎌'),
       el('span', {}, el('strong', {}, holiday), ' — 공휴일에는 식당마다 운영이 달라요. 가기 전에 확인하세요.')));
   }
-  if (state.meal === 'breakfast' && cards.length) {
-    children.push(el('p', { class: 'banner' },
-      el('span', { class: 'big', 'aria-hidden': 'true' }, '🍚'),
-      el('span', {}, el('strong', {}, '천원의 아침밥'), ' — 재학생은 아침 한 끼 1,000원')));
-  }
   if (cards.length > 1) {
     children.push(el('div', { class: 'tools' },
       el('button', { class: 'text-button', type: 'button', onclick: openOrder }, '↕ 식당 순서 바꾸기')));
