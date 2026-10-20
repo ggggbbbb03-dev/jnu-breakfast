@@ -6,6 +6,8 @@ const MEALS = [
   { id: 'lunch', label: '점심', test: /중식/, until: 15 * 60 },
   { id: 'dinner', label: '저녁', test: /석식/, until: 24 * 60 },
 ];
+// 저녁이 모두 끝난 뒤(가장 늦은 석식 19:00 + 30분)에는 내일 아침을 먼저 보여 준다
+const NIGHT_FROM = 19 * 60 + 30;
 // 밥·김치·기본 샐러드처럼 매일 나오는 것은 흐리게, 그 다음 첫 메뉴(대표 메뉴)는 굵게
 const BASIC = /^(백미밥|흑미밥|보리밥|현미밥|잡곡밥|추가밥|.*김치|깍두기|석박지|단무지|오이피클|피클|(그린|믹스|양배추)샐러드.*|샐러드 \+.*|시리얼.*|씨리얼.*|식빵&잼|셀프토스트.*|우유)$/;
 
@@ -32,6 +34,14 @@ function el(tag, attrs = {}, ...children) {
 function kstNow() {
   const d = new Date(Date.now() + 9 * 3600e3);
   return { date: d.toISOString().slice(0, 10), minutes: d.getUTCHours() * 60 + d.getUTCMinutes() };
+}
+
+function nextDay(iso) {
+  return new Date(Date.parse(`${iso}T00:00:00Z`) + 864e5).toISOString().slice(0, 10);
+}
+
+function isNight() {
+  return kstNow().minutes >= NIGHT_FROM;
 }
 
 function weekdayOf(iso) {
@@ -74,19 +84,23 @@ function statusOf(range, date) {
   return { cls: 'done', text: '마감' };
 }
 
-// 식단이 올라온 날짜들 + 오늘
+// 식단이 올라온 날짜들 + 오늘 (밤에는 내일도)
 function allDates(data) {
-  const set = new Set([kstNow().date]);
+  const today = kstNow().date;
+  const set = new Set([today]);
+  if (isNight()) set.add(nextDay(today));
   for (const cafe of data.cafeterias) for (const day of cafe.days) set.add(day.date);
   return [...set].sort();
 }
 
 function pickDefaultDate(dates) {
   const today = kstNow().date;
-  return dates.includes(today) ? today : dates.find((d) => d > today) ?? dates.at(-1);
+  const target = isNight() ? nextDay(today) : today;
+  return dates.includes(target) ? target : dates.find((d) => d > target) ?? dates.at(-1);
 }
 
 function pickDefaultMeal() {
+  if (isNight()) return 'breakfast';
   const { minutes } = kstNow();
   return MEALS.find((m) => minutes < m.until).id;
 }
@@ -137,13 +151,15 @@ function renderDays() {
         'aria-pressed': String(date === state.date),
         'aria-label': `${Number(date.slice(5, 7))}월 ${d}일 ${WEEKDAYS[wd]}요일${date === today ? ' (오늘)' : ''}`,
         onclick: () => { state.date = date; render(); },
-      }, el('span', { class: 'dow' }, date === today ? '오늘' : WEEKDAYS[wd]), el('span', { class: 'dnum' }, d));
+      }, el('span', { class: 'dow' }, date === today ? '오늘' : date === nextDay(today) ? '내일' : WEEKDAYS[wd]), el('span', { class: 'dnum' }, d));
     }),
   );
   nav.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
 
   const [, m, d] = state.date.split('-').map(Number);
-  $('title').textContent = state.date === today ? '오늘의 학식' : `${m}월 ${d}일 (${WEEKDAYS[weekdayOf(state.date)]}) 학식`;
+  $('title').textContent = state.date === today ? '오늘의 학식'
+    : state.date === nextDay(today) ? '내일의 학식'
+    : `${m}월 ${d}일 (${WEEKDAYS[weekdayOf(state.date)]}) 학식`;
 }
 
 /* 끼니 탭 */
