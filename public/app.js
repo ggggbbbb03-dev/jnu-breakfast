@@ -11,26 +11,14 @@ const MEAL_KINDS = {
   간편식: { id: 'quick', icon: '🥪' },
   일반식: { id: 'full', icon: '🍚' },
 };
-// 헬스장(지하체육관 피트니스센터). 바뀔 일이 드물어 한 번 옮겨 적은 값이다.
-// 출처: 제주대학교 시설물예약시스템 공지
-//   '제주대학교 무료·유료 개방 체육시설 안내(26. 5. 13. 기준)' — 개방일·시간·대상·이용방법
-//   '피트니스센터(헬스장) 개방 및 이용 안내(23. 3. 6.~)' — 이용 유의사항
+// 헬스장(체육관 지하 피트니스센터). 바뀔 일이 드물어 한 번 옮겨 적은 값이다.
+// 출처: 제주대학교 시설물예약시스템 공지 '제주대학교 무료·유료 개방 체육시설 안내(26. 5. 13. 기준)'
+//   https://booking.jejunu.ac.kr/sports/notice.htm?act=view&seq=274575  (2026-10-20 확인)
 const GYM = {
-  name: '피트니스센터 (헬스장)',
-  location: '지하체육관',
+  location: '체육관 지하',
   weekdays: [1, 2, 3, 4, 5],
   sessions: [['08:00', '12:00'], ['13:00', '20:00']],
-  who: '학내구성원 · 무료',
-  how: '프론트에 모바일 이용증(제주대 도서관 앱) 제시',
-  notes: [
-    '체육 수업·특기자 훈련 시간에는 이용이 제한될 수 있어요 (월별 시간표는 센터·에브리타임 공지)',
-    '실내 운동화 필수 · 수건·운동복·샤워용품 개인 지참',
-    '근로장학생 등 상주 인원이 없으면 이용 불가',
-  ],
-  phone: '064-754-2271',
   source: 'https://booking.jejunu.ac.kr/sports/notice.htm?act=view&seq=274575',
-  noticeAsOf: '2026. 5. 13.',
-  checkedAt: '2026-10-20',
 };
 
 // 저녁이 모두 끝난 뒤(가장 늦은 석식 19:00 + 30분)에는 내일 아침을 먼저 보여 준다
@@ -388,7 +376,7 @@ function resetOrder() {
 /* 헬스장 */
 function gymStatus() {
   const now = kstNow();
-  if (!GYM.weekdays.includes(weekdayOf(now.date))) return { cls: 'off', text: '오늘 휴관 (평일만 운영)' };
+  if (!GYM.weekdays.includes(weekdayOf(now.date))) return { cls: 'off', text: '오늘 휴관' };
   const holiday = holidayOf(now.date);
   if (holiday) return { cls: 'off', text: `오늘 휴관 (${holiday})` };
   const ranges = GYM.sessions.map(([a, b]) => [toMinutes(a), toMinutes(b)]);
@@ -406,28 +394,32 @@ function gymStatus() {
   return { cls: 'done', text: '오늘 마감' };
 }
 
+// 화면 오른쪽 아래에 떠 있는 작은 칩. 누르면 시간표만 펼쳐진다.
 function renderGym() {
   const status = gymStatus();
+  const open = Boolean(state.gymOpen);
   $('gym').replaceChildren(
-    el('h2', { id: 'h-gym' }, '헬스장'),
-    el('article', { class: 'card gym-card' },
-      el('div', { class: 'card-head' },
-        el('div', {},
-          el('h3', { class: 'card-title' }, GYM.name),
-          el('p', { class: 'card-sub' }, `${GYM.location} · 평일 ${GYM.sessions.map(([a, b]) => `${a}~${b}`).join(', ')}`),
-        ),
-        el('span', { class: `status ${status.cls}` }, status.text),
-      ),
-      el('dl', { class: 'gym-facts' },
-        el('dt', {}, '대상'), el('dd', {}, GYM.who),
-        el('dt', {}, '이용'), el('dd', {}, GYM.how),
-        el('dt', {}, '문의'), el('dd', {}, el('a', { href: `tel:${GYM.phone}` }, `체육진흥센터 ${GYM.phone}`)),
-      ),
-      el('ul', { class: 'gym-notes' }, GYM.notes.map((n) => el('li', {}, n))),
-      el('p', { class: 'gym-meta' }, `학교 공지(${GYM.noticeAsOf} 기준) · ${GYM.checkedAt} 확인 · `,
-        el('a', { href: GYM.source, target: '_blank', rel: 'noopener' }, '원본 공지 ↗')),
+    open && el('div', { class: 'gym-pop', id: 'gym-pop', role: 'dialog', 'aria-label': '헬스장 시간표' },
+      el('p', { class: 'gym-pop-title' }, `헬스장 · ${GYM.location}`),
+      el('p', { class: 'gym-pop-label' }, '평일'),
+      GYM.sessions.map(([a, b]) => el('p', { class: 'gym-pop-time' }, `${a} ~ ${b}`)),
+      el('p', { class: 'gym-pop-sub' }, '주말·공휴일 휴관 · ',
+        el('a', { href: GYM.source, target: '_blank', rel: 'noopener' }, '원본')),
     ),
+    el('button', {
+      type: 'button',
+      class: `gym-chip ${status.cls}`,
+      'aria-expanded': String(open),
+      'aria-controls': 'gym-pop',
+      onclick: (event) => { event.stopPropagation(); state.gymOpen = !open; renderGym(); },
+    }, el('span', { 'aria-hidden': 'true' }, '🏋️'), ` 헬스장 · ${status.text}`),
   );
+}
+
+function closeGym() {
+  if (!state.gymOpen) return;
+  state.gymOpen = false;
+  renderGym();
 }
 
 /* 식당 정보 · 꼬리말 */
@@ -474,6 +466,8 @@ async function main() {
   renderGym();
   renderInfo();
   $('order-reset').onclick = resetOrder;
+  addEventListener('click', (event) => { if (!$('gym').contains(event.target)) closeGym(); });
+  addEventListener('keydown', (event) => { if (event.key === 'Escape') closeGym(); });
   loadDorm1();
   // 운영 상태 표시를 1분마다 새로 고친다
   setInterval(() => { renderNow(); renderMain(); renderGym(); }, 60_000);

@@ -396,11 +396,44 @@ main { padding-top: 16px; padding-bottom: 8px; min-height: 50vh; }
 .kind-pill.kind-quick { background: var(--quick-soft); color: var(--quick-text); }
 .kind-pill.kind-full { background: var(--accent-soft); color: var(--full-text); }
 
-/* 헬스장 */
-.gym h2 { font-size: 15px; color: var(--muted); margin: 28px 0 8px; font-weight: 700; }
-.gym-facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 12px 0 0; font-size: 14px; }
-.gym-facts dt { color: var(--muted); font-weight: 600; }
-.gym-facts dd { margin: 0; }
-.gym-notes { margin: 12px 0 0; padding-left: 18px; font-size: 13.5px; color: var(--muted); }
-.gym-notes li { margin: 3px 0; }
-.gym-meta { margin: 12px 0 0; font-size: 12.5px; color: var(--muted); }
+/* 헬스장: 오른쪽 아래 떠 있는 작은 칩 */
+.gym-float {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.gym-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: var(--surface);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 14%);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.gym-chip.live { color: var(--live); }
+.gym-chip.soon { color: var(--soon); }
+.gym-pop {
+  width: 190px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+}
+.gym-pop p { margin: 0; }
+.gym-pop-title { font-size: 13px; font-weight: 700; color: var(--muted); }
+.gym-pop-label { margin-top: 6px !important; font-size: 12px; color: var(--muted); }
+.gym-pop-time { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.45; }
+.gym-pop-sub { margin-top: 4px !important; font-size: 12px; color: var(--muted); }
+/* 떠 있는 칩이 꼬리말을 가리지 않게 */
+.foot { padding-bottom: max(72px, calc(env(safe-area-inset-bottom) + 64px)); }
+
