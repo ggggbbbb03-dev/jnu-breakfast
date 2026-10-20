@@ -395,3 +395,12 @@ main { padding-top: 16px; padding-bottom: 8px; min-height: 50vh; }
 }
 .kind-pill.kind-quick { background: var(--quick-soft); color: var(--quick-text); }
 .kind-pill.kind-full { background: var(--accent-soft); color: var(--full-text); }
+
+/* 헬스장 */
+.gym h2 { font-size: 15px; color: var(--muted); margin: 28px 0 8px; font-weight: 700; }
+.gym-facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 12px 0 0; font-size: 14px; }
+.gym-facts dt { color: var(--muted); font-weight: 600; }
+.gym-facts dd { margin: 0; }
+.gym-notes { margin: 12px 0 0; padding-left: 18px; font-size: 13.5px; color: var(--muted); }
+.gym-notes li { margin: 3px 0; }
+.gym-meta { margin: 12px 0 0; font-size: 12.5px; color: var(--muted); }
