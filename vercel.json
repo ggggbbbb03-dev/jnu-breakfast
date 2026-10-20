@@ -8,6 +8,9 @@
     },
     "api/dorm1-meals.js": {
       "maxDuration": 30
+    },
+    "api/gym.js": {
+      "maxDuration": 30
     }
   },
   "outputDirectory": "public",
