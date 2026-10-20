@@ -394,32 +394,15 @@ function gymStatus() {
   return { cls: 'done', text: '오늘 마감' };
 }
 
-// 화면 오른쪽 아래에 떠 있는 작은 칩. 누르면 시간표만 펼쳐진다.
+// 페이지 맨 아래 한 줄: 지금 상태 + 시간표
 function renderGym() {
   const status = gymStatus();
-  const open = Boolean(state.gymOpen);
   $('gym').replaceChildren(
-    open && el('div', { class: 'gym-pop', id: 'gym-pop', role: 'dialog', 'aria-label': '헬스장 시간표' },
-      el('p', { class: 'gym-pop-title' }, `헬스장 · ${GYM.location}`),
-      el('p', { class: 'gym-pop-label' }, '평일'),
-      GYM.sessions.map(([a, b]) => el('p', { class: 'gym-pop-time' }, `${a} ~ ${b}`)),
-      el('p', { class: 'gym-pop-sub' }, '주말·공휴일 휴관 · ',
-        el('a', { href: GYM.source, target: '_blank', rel: 'noopener' }, '원본')),
-    ),
-    el('button', {
-      type: 'button',
-      class: `gym-chip ${status.cls}`,
-      'aria-expanded': String(open),
-      'aria-controls': 'gym-pop',
-      onclick: (event) => { event.stopPropagation(); state.gymOpen = !open; renderGym(); },
-    }, el('span', { 'aria-hidden': 'true' }, '🏋️'), ` 헬스장 · ${status.text}`),
+    el('span', { 'aria-hidden': 'true' }, '🏋️ '),
+    el('strong', {}, `헬스장(${GYM.location})`),
+    el('span', { class: `gym-state ${status.cls}` }, status.text),
+    el('span', { class: 'gym-time' }, `평일 ${GYM.sessions.map(([a, b]) => `${a}~${b}`).join(', ')}`),
   );
-}
-
-function closeGym() {
-  if (!state.gymOpen) return;
-  state.gymOpen = false;
-  renderGym();
 }
 
 /* 식당 정보 · 꼬리말 */
@@ -466,8 +449,6 @@ async function main() {
   renderGym();
   renderInfo();
   $('order-reset').onclick = resetOrder;
-  addEventListener('click', (event) => { if (!$('gym').contains(event.target)) closeGym(); });
-  addEventListener('keydown', (event) => { if (event.key === 'Escape') closeGym(); });
   loadDorm1();
   // 운영 상태 표시를 1분마다 새로 고친다
   setInterval(() => { renderNow(); renderMain(); renderGym(); }, 60_000);
