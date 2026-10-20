@@ -6,6 +6,11 @@ const MEALS = [
   { id: 'lunch', label: '점심', test: /중식/, until: 15 * 60 },
   { id: 'dinner', label: '저녁', test: /석식/, until: 24 * 60 },
 ];
+// 천원의 아침밥 간편식·일반식을 한눈에 구분하도록 색·아이콘을 다르게 준다
+const MEAL_KINDS = {
+  간편식: { id: 'quick', icon: '🥪' },
+  일반식: { id: 'full', icon: '🍚' },
+};
 // 저녁이 모두 끝난 뒤(가장 늦은 석식 19:00 + 30분)에는 내일 아침을 먼저 보여 준다
 const NIGHT_FROM = 19 * 60 + 30;
 // 밥·김치·기본 샐러드처럼 매일 나오는 것은 흐리게, 그 다음 첫 메뉴(대표 메뉴)는 굵게
@@ -237,14 +242,19 @@ function cardHead(cafe) {
 function cafeCard(cafe, meals) {
   return el('article', { class: 'card' },
     cardHead(cafe),
-    meals.map((meal) => el('section', { class: 'meal' },
-      (shortName(meal) || meal.cheonwon || meal.limit) && el('div', { class: 'meal-head' },
-        shortName(meal) && el('span', { class: 'meal-name' }, shortName(meal)),
-        meal.cheonwon && el('span', { class: 'tag' }, '천원의 아침밥'),
-        meal.limit && el('span', { class: 'tag plain' }, `${meal.limit}개 한정`),
-      ),
-      meal.closed ? el('p', { class: 'note' }, meal.note || '미운영') : itemList(meal.items),
-    )),
+    meals.map((meal) => {
+      const name = shortName(meal);
+      const kind = MEAL_KINDS[name];
+      return el('section', { class: `meal${kind ? ` kind-${kind.id}` : ''}` },
+        (name || meal.limit) && el('div', { class: 'meal-head' },
+          kind
+            ? el('span', { class: `kind-pill kind-${kind.id}` }, el('span', { 'aria-hidden': 'true' }, kind.icon), name)
+            : name && el('span', { class: 'meal-name' }, name),
+          meal.limit && el('span', { class: 'tag plain' }, `${meal.limit}개 한정`),
+        ),
+        meal.closed ? el('p', { class: 'note' }, meal.note || '미운영') : itemList(meal.items),
+      );
+    }),
     cafe.error && el('p', { class: 'warn' }, `최근 갱신 실패 — ${formatTime(cafe.updatedAt)} 기준 식단입니다.`),
     cafe.live && linkRow(sourceLinks(cafe)),
   );

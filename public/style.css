@@ -14,6 +14,10 @@
   --soon: #9a6a00;
   --soon-soft: #fbefcd;
   --warn: #b0431a;
+  --quick: #0d7a6a;
+  --quick-soft: #d6f1eb;
+  --quick-text: #0a6658;
+  --full-text: #9a3d17;
   --shadow: 0 1px 2px rgb(60 40 20 / 6%), 0 4px 14px rgb(60 40 20 / 5%);
   --radius: 16px;
   color-scheme: light;
@@ -36,6 +40,10 @@
     --soon: #f0c766;
     --soon-soft: #3d3215;
     --warn: #f3a37c;
+    --quick: #6fd6c2;
+    --quick-soft: #183a34;
+    --quick-text: #6fd6c2;
+    --full-text: #f28a52;
     --shadow: none;
     color-scheme: dark;
   }
@@ -57,6 +65,10 @@
   --soon: #f0c766;
   --soon-soft: #3d3215;
   --warn: #f3a37c;
+  --quick: #6fd6c2;
+  --quick-soft: #183a34;
+  --quick-text: #6fd6c2;
+  --full-text: #f28a52;
   --shadow: none;
   color-scheme: dark;
 }
@@ -367,3 +379,19 @@ main { padding-top: 16px; padding-bottom: 8px; min-height: 50vh; }
   font-weight: 600;
   cursor: pointer;
 }
+
+/* 간편식 · 일반식 구분 */
+.meal.kind-quick, .meal.kind-full { padding-left: 12px; border-left: 3px solid; }
+.meal.kind-quick { border-left-color: var(--quick); }
+.meal.kind-full { border-left-color: var(--accent); }
+.kind-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+.kind-pill.kind-quick { background: var(--quick-soft); color: var(--quick-text); }
+.kind-pill.kind-full { background: var(--accent-soft); color: var(--full-text); }
