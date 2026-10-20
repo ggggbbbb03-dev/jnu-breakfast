@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     const page = await getSchool(new URL(path, ORIGIN).toString());
     const links = [...page.text.matchAll(/<a[^>]*href="([^"#]*)"[^>]*>([\s\S]*?)<\/a>/gi)]
       .map((m) => `${toLines(m[2]).join(' ')} ${m[1]}`.trim())
-      .filter((l) => /체력|헬스|피트|운영|이용|시간|휴관|공지|시설|안내/.test(l));
+      .filter((l) => /체력|헬스|피트|운영|이용|시간|휴관|공지|시설|안내|체육관|운동장|테니스|wcmsje/.test(l));
     res.setHeader('Cache-Control', 'public, s-maxage=3600');
     res.status(200).json({ status: page.status, url: page.url, links: [...new Set(links)].slice(0, 80), lines: toLines(page.text).slice(0, 250) });
   } catch (err) {
