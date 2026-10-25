@@ -138,8 +138,19 @@ function allDates(data) {
   const from = prevDay(today);
   const set = new Set([today]);
   if (isNight()) set.add(nextDay(today));
-  for (const cafe of data.cafeterias) for (const day of cafe.days) if (day.date >= from) set.add(day.date);
+  for (const date of menuDates(data)) if (date >= from) set.add(date);
   return [...set].sort();
+}
+
+// 식단(글자) 또는 주간식단표 그림이 있는 날짜
+function menuDates(data) {
+  const set = new Set();
+  for (const cafe of data.cafeterias) {
+    for (const day of cafe.days) set.add(day.date);
+    const image = cafe.weekImage;
+    if (image) for (let d = image.start; d <= image.end; d = nextDay(d)) set.add(d);
+  }
+  return set;
 }
 
 function pickDefaultDate(dates) {
@@ -189,7 +200,7 @@ function linkRow(links) {
 /* 날짜 */
 function renderDays() {
   const today = kstNow().date;
-  const withMenu = new Set(state.data.cafeterias.flatMap((c) => c.days.map((d) => d.date)));
+  const withMenu = menuDates(state.data);
   const nav = $('days');
   nav.replaceChildren(
     ...allDates(state.data).map((date) => {
@@ -291,6 +302,25 @@ function pendingCard(cafe) {
   );
 }
 
+// 학교 페이지에 아직 없는 날: 업체 게시판의 주간식단표 그림이 그 날을 덮으면 그림을 보여 준다
+function weekImageFor(cafe, date) {
+  const image = cafe.weekImage;
+  return image && date >= image.start && date <= image.end ? image : null;
+}
+
+function weekImageCard(cafe) {
+  const image = cafe.weekImage;
+  return el('article', { class: 'card' },
+    cardHead(cafe),
+    el('p', { class: 'note' }, '학교 페이지에 아직 안 올라와서, 식당이 올린 주간식단표 그림을 보여 드려요.'),
+    el('a', { class: 'week-image', href: image.src, target: '_blank', rel: 'noopener' },
+      el('img', { src: image.src, alt: `${cafe.name} ${image.title}`, loading: 'lazy', decoding: 'async' })),
+    el('div', { class: 'links' },
+      el('a', { href: image.src, target: '_blank', rel: 'noopener' }, '크게 보기 ↗'),
+      el('a', { href: image.postUrl, target: '_blank', rel: 'noopener' }, '원본 글 ↗')),
+  );
+}
+
 function runsOn(cafe, mealId, date) {
   if (mealId === 'breakfast') return Boolean(cafe.cheonwon?.weekdays.includes(weekdayOf(date)));
   return Boolean(cafe.times?.[mealId]);
@@ -306,6 +336,7 @@ function plan(mealId) {
     const meals = mealsFor(cafe, state.date, mealId);
     if (holiday && cafe.closedOnHolidays) closed.push(`${cafe.name}(공휴일 휴무)`);
     else if (meals.some((m) => !m.closed)) shown.push({ cafe, meals });
+    else if (!meals.length && weekImageFor(cafe, state.date) && runsOn(cafe, mealId, state.date)) shown.push({ cafe, image: true });
     else if (cafe.id === 'dorm1' && runsOn(cafe, mealId, state.date) && state.date >= kstNow().date) shown.push({ cafe, pending: true });
     else if (runsOn(cafe, mealId, state.date) || meals.length) closed.push(cafe.name);
   }
@@ -314,7 +345,7 @@ function plan(mealId) {
 
 function renderMain() {
   const { shown, closed } = plan(state.meal);
-  const cards = shown.map((s) => (s.pending ? pendingCard(s.cafe) : cafeCard(s.cafe, s.meals)));
+  const cards = shown.map((s) => (s.pending ? pendingCard(s.cafe) : s.image ? weekImageCard(s.cafe) : cafeCard(s.cafe, s.meals)));
   const holiday = holidayOf(state.date);
 
   const children = [];

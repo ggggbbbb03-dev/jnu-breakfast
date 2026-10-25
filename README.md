@@ -7,13 +7,19 @@
 
 | 식당 | 원본 | 천원의 아침밥 | 메뉴 수집 |
 | --- | --- | --- | --- |
-| 학생생활관 6호관 | [fixfirst.htm](https://www.jejunu.ac.kr/camp/stud/foodmenu/fixfirst.htm) | 월~토, 간편식·일반식 | 자동 |
+| 학생생활관 6호관 | [fixfirst.htm](https://www.jejunu.ac.kr/camp/stud/foodmenu/fixfirst.htm) + [아이비푸드 주간식단표](https://ibfood8.cafe24.com/default/02/01.php?com_board_id=5) | 월~토, 간편식·일반식 | 자동 (학교 페이지에 없는 날은 업체 식단표 그림) |
 | 학생생활관 1호관 | [chefskiss.co.kr/morning](https://chefskiss.co.kr/morning) | 일~금, 일반식·간편식 | 자동 (Vercel 서울 리전 함수, 점심·저녁 포함) + 예비로 직접 입력 |
 | 백두관 | [firstfixmenu.htm](https://www.jejunu.ac.kr/camp/stud/foodmenu/firstfixmenu.htm) | 표기 없음 | 자동 |
 | 사라캠퍼스 | [secondfixmenu.htm](https://www.jejunu.ac.kr/camp/stud/foodmenu/secondfixmenu.htm) | 없음 | 자동 |
 
 운영시간·가격 같은 안내 문구는 [`scripts/cafeterias.mjs`](scripts/cafeterias.mjs)에 손으로 옮겨 두었습니다 (`CHECKED_AT` 날짜 기준).
 학교 안내가 바뀌면 이 파일을 고쳐 주세요.
+
+## 6호관 업체 식단표 그림
+
+6호관 운영 업체(아이비푸드)는 다음 주 식단표를 그 전 주 수·목요일에 그림으로 올리지만, 학교 페이지는 그 주가 돼야 바뀝니다.
+수집 작업이 최신 그림 한 장을 `public/data/dorm6-week.jpg` 로 받아 두고([`scripts/ibfood.mjs`](scripts/ibfood.mjs)),
+학교 페이지에 아직 없는 날에는 그 그림을 보여 줍니다. 그림 글자를 자동으로 읽으면 틀리기 쉬워 글자로 바꾸지는 않습니다.
 
 ## 1호관 (쉐프스키스)
 

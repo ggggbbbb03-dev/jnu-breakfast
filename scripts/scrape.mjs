@@ -11,11 +11,16 @@ import { cafeterias, CHECKED_AT } from './cafeterias.mjs';
 import { parseMenuPage, kstToday } from './parse.mjs';
 import { parseManual } from './manual.mjs';
 import { holidays, HOLIDAYS_CHECKED_AT } from './holidays.mjs';
+import { IBFOOD_BOARD, IBFOOD_ORIGIN, decodeIbfood, parseIbList, parseIbPostImage, weekAfter } from './ibfood.mjs';
 
 const OUT = fileURLToPath(new URL('../public/data/menus.json', import.meta.url));
 const ATTEMPTS = 3;
 
 async function fetchPage(url) {
+  return new TextDecoder().decode(await fetchBuffer(url));
+}
+
+async function fetchBuffer(url) {
   let lastError;
   for (let i = 0; i < ATTEMPTS; i++) {
     try {
@@ -24,13 +29,36 @@ async function fetchPage(url) {
         signal: AbortSignal.timeout(20_000),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.text();
+      return new Uint8Array(await res.arrayBuffer());
     } catch (err) {
       lastError = err;
       if (i < ATTEMPTS - 1) await new Promise((r) => setTimeout(r, 2000 * 2 ** i));
     }
   }
   throw new Error(`${url}: ${lastError?.cause?.code ?? lastError?.message}`);
+}
+
+// 6호관 업체 게시판의 최신 주간식단표 그림을 public/data 에 한 장만 저장한다 (같은 글이면 다시 받지 않음).
+const WEEK_IMAGE = fileURLToPath(new URL('../public/data/dorm6-week.jpg', import.meta.url));
+async function fetchWeekImage(previous) {
+  const [latest] = parseIbList(decodeIbfood(await fetchBuffer(IBFOOD_BOARD)));
+  if (!latest) throw new Error('업체 게시판에서 주간식단표 글을 찾지 못했습니다');
+  const postUrl = `${IBFOOD_ORIGIN}/default/02/01.php?com_board_basic=read_form&com_board_idx=${latest.idx}&com_board_id=5`;
+  if (previous?.idx === latest.idx) {
+    try {
+      await readFile(WEEK_IMAGE);
+      return previous;
+    } catch {
+      // 파일이 없으면 다시 받는다
+    }
+  }
+  const imageUrl = parseIbPostImage(decodeIbfood(await fetchBuffer(postUrl)), latest.idx);
+  if (!imageUrl) throw new Error(`${latest.title}: 식단표 그림을 찾지 못했습니다`);
+  const image = await fetchBuffer(imageUrl);
+  if (image[0] !== 0xff || image[1] !== 0xd8) throw new Error(`${imageUrl}: jpg 가 아닙니다`);
+  await writeFile(WEEK_IMAGE, image);
+  const { start, end } = weekAfter(latest.date);
+  return { src: `data/dorm6-week.jpg?v=${latest.idx}`, idx: latest.idx, title: latest.title, postedAt: latest.date, start, end, postUrl };
 }
 
 async function readPrevious() {
@@ -47,7 +75,7 @@ const results = [];
 let failures = 0;
 
 for (const cafe of cafeterias) {
-  const { scrape, manual, ...info } = cafe;
+  const { scrape, manual, weekImage, ...info } = cafe;
   const entry = { ...info, days: [], updatedAt: null, error: null };
   if (scrape) {
     try {
@@ -80,6 +108,16 @@ for (const cafe of cafeterias) {
         entry.error = `${manual}: ${err.message}`;
         console.error(`[${cafe.id}] ${entry.error}`);
       }
+    }
+  }
+  if (weekImage) {
+    const old = previous?.cafeterias?.find((c) => c.id === cafe.id)?.weekImage ?? null;
+    try {
+      entry.weekImage = await fetchWeekImage(old);
+    } catch (err) {
+      // 그림을 못 받아도 학교 페이지 식단은 그대로 쓴다
+      entry.weekImage = old;
+      console.error(`[${cafe.id}] 주간식단표 그림: ${err.message}`);
     }
   }
   results.push(entry);

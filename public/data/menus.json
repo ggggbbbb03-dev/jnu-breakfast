@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-25T12:31:56.297Z",
+  "generatedAt": "2026-10-25T15:05:46.450Z",
   "infoCheckedAt": "2026-10-19",
   "holidays": {
     "2026-12-25": "기독탄신일",
@@ -500,8 +500,17 @@
           ]
         }
       ],
-      "updatedAt": "2026-10-25T12:31:54.494Z",
-      "error": null
+      "updatedAt": "2026-10-25T15:05:37.724Z",
+      "error": null,
+      "weekImage": {
+        "src": "data/dorm6-week.jpg?v=222",
+        "idx": "222",
+        "title": "제주대 학생생활관 6호관 식당 10월 5주차 주간식단표",
+        "postedAt": "2026-10-22",
+        "start": "2026-10-26",
+        "end": "2026-11-01",
+        "postUrl": "https://ibfood8.cafe24.com/default/02/01.php?com_board_basic=read_form&com_board_idx=222&com_board_id=5"
+      }
     },
     {
       "id": "dorm1",
@@ -812,7 +821,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-10-25T12:31:54.869Z",
+      "updatedAt": "2026-10-25T15:05:43.825Z",
       "error": null
     },
     {
@@ -1008,7 +1017,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-10-25T12:31:56.297Z",
+      "updatedAt": "2026-10-25T15:05:46.450Z",
       "error": null
     }
   ]

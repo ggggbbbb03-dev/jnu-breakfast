@@ -33,13 +33,14 @@ jobs:
       - name: 바뀐 메뉴가 있으면 커밋
         run: |
           # generatedAt 만 바뀐 경우는 커밋하지 않는다 (불필요한 재배포 방지)
-          if git diff --quiet -I'"generatedAt"' -- public/data/menus.json; then
+          if git diff --quiet -I'"generatedAt"' -- public/data/menus.json \
+            && [ -z "$(git status --porcelain -- public/data/dorm6-week.jpg)" ]; then
             echo "메뉴 변경 없음"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data/menus.json
+          git add public/data/menus.json public/data/dorm6-week.jpg
           git commit -m "식단 갱신 $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M')"
           git push
       # 수집이 멈췄거나 1호관 함수가 고장 나면 여기서 실패해 메일 알림이 간다

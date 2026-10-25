@@ -17,6 +17,8 @@ export const cafeterias = [
     operator: '아이비푸드',
     url: `${BASE}/fixfirst.htm`,
     scrape: true,
+    // 업체(아이비푸드) 게시판에 다음 주 식단표 그림이 먼저 올라온다. 학교 페이지에 없는 날은 그 그림을 보여 준다.
+    weekImage: true,
     cheonwon: {
       weekdays: [1, 2, 3, 4, 5, 6],
       hours: '월~토 07:30~09:30 (일요일 미운영)',

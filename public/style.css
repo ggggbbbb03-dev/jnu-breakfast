@@ -415,3 +415,7 @@ main { padding-top: 16px; padding-bottom: 8px; min-height: 50vh; }
 .gym-state.soon { color: var(--soon); }
 .gym-time { font-variant-numeric: tabular-nums; }
 
+/* 6호관 주간식단표 그림 (학교 페이지에 아직 없는 날) */
+.week-image { display: block; margin-top: 10px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.week-image img { display: block; width: 100%; height: auto; }
+
