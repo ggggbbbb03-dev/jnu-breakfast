@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T00:49:29.316Z",
+  "generatedAt": "2026-10-29T08:24:10.826Z",
   "infoCheckedAt": "2026-10-19",
   "holidays": {
     "2026-12-25": "기독탄신일",
@@ -498,16 +498,16 @@
           ]
         }
       ],
-      "updatedAt": "2026-10-29T00:49:26.656Z",
+      "updatedAt": "2026-10-29T08:24:06.852Z",
       "error": null,
       "weekImage": {
-        "src": "data/dorm6-week.jpg?v=222",
-        "idx": "222",
-        "title": "제주대 학생생활관 6호관 식당 10월 5주차 주간식단표",
-        "postedAt": "2026-10-22",
-        "start": "2026-10-26",
-        "end": "2026-11-01",
-        "postUrl": "https://ibfood8.cafe24.com/default/02/01.php?com_board_basic=read_form&com_board_idx=222&com_board_id=5"
+        "src": "data/dorm6-week.jpg?v=223",
+        "idx": "223",
+        "title": "제주대 학생생활관 6호관 식당 11월 1주차 주간식단표",
+        "postedAt": "2026-10-29",
+        "start": "2026-11-02",
+        "end": "2026-11-08",
+        "postUrl": "https://ibfood8.cafe24.com/default/02/01.php?com_board_basic=read_form&com_board_idx=223&com_board_id=5"
       }
     },
     {
@@ -770,7 +770,7 @@
                 "돼지고기김치볶음",
                 "쌀밥",
                 "근대된장국",
-                "함박바베큐소스볶음",
+                "닭다리살바베큐볶음",
                 "부추오이생채",
                 "무나물",
                 "양배추샐러드&소스"
@@ -819,7 +819,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-10-29T00:49:27.883Z",
+      "updatedAt": "2026-10-29T08:24:09.371Z",
       "error": null
     },
     {
@@ -1015,7 +1015,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-10-29T00:49:29.316Z",
+      "updatedAt": "2026-10-29T08:24:10.826Z",
       "error": null
     }
   ]
