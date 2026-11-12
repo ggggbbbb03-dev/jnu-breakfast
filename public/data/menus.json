@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T02:13:51.416Z",
+  "generatedAt": "2026-11-12T09:43:42.762Z",
   "infoCheckedAt": "2026-10-19",
   "holidays": {
     "2026-12-25": "기독탄신일",
@@ -499,16 +499,16 @@
           ]
         }
       ],
-      "updatedAt": "2026-11-12T02:13:49.290Z",
+      "updatedAt": "2026-11-12T09:43:39.129Z",
       "error": null,
       "weekImage": {
-        "src": "data/dorm6-week.jpg?v=224",
-        "idx": "224",
-        "title": "제주대 학생생활관 6호관 식당 11월 2주차 주간식단표",
-        "postedAt": "2026-11-04",
-        "start": "2026-11-09",
-        "end": "2026-11-15",
-        "postUrl": "https://ibfood8.cafe24.com/default/02/01.php?com_board_basic=read_form&com_board_idx=224&com_board_id=5"
+        "src": "data/dorm6-week.jpg?v=225",
+        "idx": "225",
+        "title": "제주대 학생생활관 6호관 식당 11월 3주차 주간식단표",
+        "postedAt": "2026-11-12",
+        "start": "2026-11-16",
+        "end": "2026-11-22",
+        "postUrl": "https://ibfood8.cafe24.com/default/02/01.php?com_board_basic=read_form&com_board_idx=225&com_board_id=5"
       }
     },
     {
@@ -826,7 +826,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-11-12T02:13:50.530Z",
+      "updatedAt": "2026-11-12T09:43:41.558Z",
       "error": null
     },
     {
@@ -1022,7 +1022,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-11-12T02:13:51.415Z",
+      "updatedAt": "2026-11-12T09:43:42.762Z",
       "error": null
     }
   ]
