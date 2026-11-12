@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T09:43:42.762Z",
+  "generatedAt": "2026-11-12T15:56:21.466Z",
   "infoCheckedAt": "2026-10-19",
   "holidays": {
     "2026-12-25": "기독탄신일",
@@ -499,7 +499,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-11-12T09:43:39.129Z",
+      "updatedAt": "2026-11-12T15:56:18.467Z",
       "error": null,
       "weekImage": {
         "src": "data/dorm6-week.jpg?v=225",
@@ -826,7 +826,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-11-12T09:43:41.558Z",
+      "updatedAt": "2026-11-12T15:56:19.922Z",
       "error": null
     },
     {
@@ -1022,7 +1022,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-11-12T09:43:42.762Z",
+      "updatedAt": "2026-11-12T15:56:21.466Z",
       "error": null
     }
   ]
